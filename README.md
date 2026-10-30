@@ -129,3 +129,4 @@ npm run dev
 |---|---|---|---|
 | `VITE_API_URL` | No | `/api` | Base API URL |
 | `VITE_DEMO_HINT` | No | `false` | Display demo credentials on login |
+

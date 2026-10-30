@@ -3,6 +3,10 @@ import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import env from './config/env.js';
+import metaRoutes from './routes/meta.routes.js';
+import authRoutes from './routes/auth.routes.js';
+import transactionRoutes from './routes/transaction.routes.js';
+import budgetRoutes from './routes/budget.routes.js';
 
 const app = express();
 
@@ -47,6 +51,12 @@ app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok' });
 });
 
+// API Routes
+app.use('/api/meta', metaRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/transactions', transactionRoutes);
+app.use('/api/budget', budgetRoutes);
+
 // 404 Handler
 app.use((req, res) => {
   res.status(404).json({
@@ -75,3 +85,4 @@ app.use((err, req, res, next) => { // eslint-disable-line no-unused-vars
 });
 
 export default app;
+
