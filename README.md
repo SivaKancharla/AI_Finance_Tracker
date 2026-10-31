@@ -1,6 +1,7 @@
 # FinTrack — AI-Powered Personal Finance Tracker
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![CI Pipeline](https://github.com/your-username/FinTrack/actions/workflows/ci.yml/badge.svg)](https://github.com/your-username/FinTrack/actions)
 [![Node: >=20.0.0](https://img.shields.io/badge/Node-%3E%3D20.0.0-green.svg)](https://nodejs.org/)
 [![React: 18.3](https://img.shields.io/badge/React-18.3-cyan.svg)](https://react.dev/)
 [![Tailwind: 3.4](https://img.shields.io/badge/Tailwind-3.4-38bdf8.svg)](https://tailwindcss.com/)
@@ -246,6 +247,15 @@ cd client
 npm run dev
 ```
 Visit `http://localhost:5173` and log in with `demo@fintrack.dev` / `Demo@1234`.
+
+### Alternative: Run with Docker Compose
+To run the complete stack (MongoDB, Backend, and Frontend) in isolated containers with a single command:
+```bash
+docker-compose up --build
+```
+- Frontend: `http://localhost:3000`
+- Backend API: `http://localhost:5000/api`
+- Database: `localhost:27017`
 
 ---
 

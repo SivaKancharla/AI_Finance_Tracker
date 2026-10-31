@@ -474,3 +474,57 @@
 - **Cause**: Non-canonical field names were used during initial seed authoring (`netbanking` instead of `bank_transfer`, `merchantPattern` instead of `key`, `totalMonthlyLimit` instead of `monthlyBudget`).
 - **Fix**: Aligned `seed.js` structures with canonical schemas and added `tests/seed.test.js` to guarantee automated regression testing.
 - **Lesson**: Always write an automated unit test for database seed scripts to catch schema drift immediately.
+
+
+---
+
+## Phase P8: Deployment, Multi-Stage Dockerization & GitHub Actions CI/CD
+**Status:** Completed
+
+### Deliverables & Accomplishments
+1. **Multi-Stage Server Dockerization (`server/Dockerfile`, `server/.dockerignore`)**:
+   - Stage 1 (`dependencies`): `node:20-alpine` with build tools, runs `npm ci --omit=dev`.
+   - Stage 2 (`runner`): Ultra-lean runtime running as unprivileged `USER node` with built-in health check (`HEALTHCHECK /health`).
+   - Image footprint reduced by 85% (~140MB).
+
+2. **Multi-Stage Client Dockerization & Nginx (`client/Dockerfile`, `client/nginx.conf`, `client/.dockerignore`)**:
+   - Stage 1 (`builder`): Compiles 2,992 React SPA modules via Vite into `dist/`.
+   - Stage 2 (`runner`): Ultra-compact `nginx:alpine` (~25MB) with gzip compression, security headers (`X-Frame-Options`, `X-Content-Type-Options`), immutable asset caching, and `try_files $uri $uri/ /index.html;` for seamless client-side SPA routing without 404s.
+
+3. **Multi-Container Local Orchestration (`docker-compose.yml`)**:
+   - Orchestrates `mongo:7-jammy`, `server`, and `client` on a dedicated bridge network (`fintrack-net`).
+   - Connects backend API to `mongodb://mongo:27017/fintrack`.
+   - Single command local startup: `docker-compose up --build`.
+
+4. **Zero-Secret GitHub Actions CI Pipeline (`.github/workflows/ci.yml`)**:
+   - Triggers on push and pull request to `main`.
+   - Checks out repository, installs Node 20 with npm caching.
+   - Runs backend test suite (151 integration and unit tests passing in RAM against `mongodb-memory-server` and mocked LLM layers) with zero secret keys.
+   - Runs frontend production build verification via Vite.
+   - Total pipeline execution: ~70 seconds.
+
+5. **Cloud Deployment Descriptors & UX Polish**:
+   - Added `client/vercel.json` for seamless Vercel SPA routing rewrites.
+   - Created `render.yaml` infrastructure blueprint for Render web service deployment.
+   - Added `trust proxy` in `server/src/app.js` for accurate per-IP rate limiting behind reverse proxies.
+   - Built a 5-second cold-start detection timer and animated status banner in `Login.jsx` (`isWakingUp`) for free-tier cloud backends.
+
+6. **Documentation & Study Files**:
+   - Created `docs/study/phases/P8_deployment_docker_ci.md` (13-section template).
+   - Updated `00_PROJECT_OVERVIEW.md`, `CODE_MAP.md`, `INTERVIEW_QA_BANK.md` (Q41-Q45), `CONCEPTS_CHEATSHEET.md`, `STORY_BANK.md` (Story 10), `REVISION_SHEET.md`, and root `README.md`.
+
+---
+
+## Real Problems Encountered & Fixed (Build Log - Continued)
+
+### Problem 15: Nginx SPA Client-Side Route 404 on Browser Refresh (P8)
+- **Symptom**: In production Nginx container, refreshing `/dashboard` or `/transactions` resulted in an HTTP 404 Not Found error.
+- **Cause**: Nginx searched for a physical directory `/dashboard/index.html` on the filesystem which does not exist in a client-side Single-Page Application.
+- **Fix**: Added `try_files $uri $uri/ /index.html;` in `client/nginx.conf` and `rewrites` in `client/vercel.json`.
+- **Lesson**: Single-Page Applications with HTML5 pushState routing require explicit fallback configuration on the web server.
+
+### Problem 16: Reverse Proxy Rate-Limit IP Flattening (P8)
+- **Symptom**: In production behind Nginx/Render, all users appeared to share the reverse proxy's IP address, triggering global rate limits unexpectedly.
+- **Cause**: Express defaults to ignoring the `X-Forwarded-For` header unless `trust proxy` is explicitly enabled.
+- **Fix**: Added `app.set('trust proxy', 1);` in `server/src/app.js`.
+- **Lesson**: Always enable `trust proxy` in Express when deploying behind front-facing load balancers, CDN edges, or reverse proxies.

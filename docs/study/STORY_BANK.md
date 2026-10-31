@@ -171,3 +171,21 @@
 >
 > **Result**: *"On our next run, all 9 batches processed cleanly with zero 429 errors. The benchmark completed with 87.06% overall accuracy, 93.06% accuracy on non-flagged transactions, and 100% defense against prompt injection attacks, providing provable data for our project."*
 
+---
+
+## Story 10: Productionizing with Multi-Stage Docker Containers & Zero-Secret CI `[DRAFT - verify]`
+- **Theme**: DevOps, Container Security, CI/CD Automation, Production Operations
+- **When to tell this**: *"Tell me how you deployed or containerized your application,"* or *"How do you structure your automated testing pipeline in CI/CD?"*
+
+### Spoken Answer (60–90 seconds)
+> **Situation**: *"When completing the deployment phase of FinTrack in Phase P8, I wanted the application to run identically on developer laptops, Docker hosts, and CI/CD pipelines without environment inconsistencies."*
+>
+> **Task**: *"Initial Docker attempts resulted in a bloated 1.1GB container because development dependencies, C++ compiler toolchains, and root privileges were included in the runtime image. Additionally, our GitHub Actions pipeline needed to test the full backend without leaking cloud API keys in repository secrets."*
+>
+> **Action**: *"I rebuilt our containerization using multi-stage builds. In `server/Dockerfile`, Stage 1 builds dependencies, while Stage 2 copies only production `node_modules` into a lean `node:20-alpine` image running as unprivileged `USER node`. For the frontend, I used a multi-stage build that compiles Vite assets and serves them via `nginx:alpine` configured with gzip and `try_files` SPA routing.
+> 
+> For CI/CD, I configured `.github/workflows/ci.yml`. Because our entire 151-test backend suite runs against `mongodb-memory-server` and mocks external LLM APIs at the provider boundary, our CI pipeline runs on every push and PR with zero secret dependencies, completing in under 75 seconds."*
+>
+> **Result**: *"Container image size dropped by over 85% (~140MB server, ~25MB client), security was hardened with non-root execution, and our GitHub Actions pipeline guarantees continuous quality without risk of credential leakage."*
+
+

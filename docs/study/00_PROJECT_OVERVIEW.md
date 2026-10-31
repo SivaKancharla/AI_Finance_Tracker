@@ -97,6 +97,8 @@ When an interviewer asks you to draw your system on a whiteboard, draw these 5 b
 | **Redux Toolkit** | Client state management | Centralized caching for auth state, categories meta, and transactions; prevents prop-drilling. |
 | **Tailwind CSS 3.4** | UI Styling | Rapid utility-first styling. Pinned to 3.4 to avoid breaking configuration changes in Tailwind v4. |
 | **Jest + Supertest** | Testing framework | Native integration with `mongodb-memory-server` allowing 100% isolated database integration testing without external dependencies. |
+| **Docker & Docker Compose** | Containerization & Orchestration | Multi-stage `node:20-alpine` and `nginx:alpine` containers with non-root security; 1-command startup. |
+| **GitHub Actions** | Automated CI/CD | Runs integration tests and production Vite builds on every commit with zero API secrets. |
 
 ---
 

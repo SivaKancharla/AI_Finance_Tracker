@@ -11,10 +11,23 @@ export function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState({});
+  const [isWakingUp, setIsWakingUp] = useState(false);
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { loading, error, isAuthenticated } = useSelector((state) => state.auth);
+
+  useEffect(() => {
+    let timer;
+    if (loading) {
+      timer = setTimeout(() => {
+        setIsWakingUp(true);
+      }, 5000);
+    } else {
+      setIsWakingUp(false);
+    }
+    return () => clearTimeout(timer);
+  }, [loading]);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -102,6 +115,12 @@ export function Login() {
             >
               Sign In
             </Button>
+
+            {isWakingUp && loading && (
+              <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 flex items-center gap-2 animate-pulse">
+                <span>⏳ Waking up free-tier cloud backend... First request can take 30–50s. Thank you for your patience!</span>
+              </div>
+            )}
           </form>
 
           {/* Demo Account Hint Button */}
