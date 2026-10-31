@@ -151,3 +151,23 @@
 > The browser cancels the in-flight network request immediately. I also handled `CanceledError` cleanly in the catch block so aborted requests produce zero console noise or error banners."*
 >
 > **Result**: *"The race condition was completely eliminated. The form displays only the suggestion matching the user's latest text with zero latency conflicts or stale data bugs."*
+
+---
+
+## Story 9: Benchmarking Against Real-World Rate Limits — Overcoming Free-Tier TPM Throttling `[DRAFT - verify]`
+- **Theme**: AI Benchmarking, API Rate Limiting, Resilience, Systems Engineering
+- **When to tell this**: *"Tell me about a challenge you faced when evaluating or integrating LLMs in production,"* or *"How do you handle API quotas and rate limits?"*
+
+### Spoken Answer (60–90 seconds)
+> **Situation**: *"In Phase P7, I built an offline benchmark runner (`run_categorization_eval.js`) to evaluate our hybrid categorization pipeline across 85 hand-labeled synthetic Indian transactions using Groq's high-capacity `openai/gpt-oss-120b` model."*
+>
+> **Task**: *"To mirror production import behavior, the runner chunks transactions into batches of 10. But on our first run, batch 6 suddenly failed with `Groq HTTP 429: Rate limit reached on tokens per minute (TPM): Limit 8000, Used 6523, Requested 1619`, and batch 8 timed out waiting in the rate-gate queue. The run aborted prematurely."*
+>
+> **Action**: *"I calculated the token dynamics: each batch payload with system instructions, XML transactions, and the Zod JSON schema used roughly 1,700 tokens. Firing 9 batches consecutively in a rapid loop consumed nearly 10,000 tokens within 15 seconds, breaching Groq's free-tier rolling 1-minute window of 8,000 TPM.
+> 
+> I implemented two fixes:
+> 1. Added a 3,000ms pacing delay between batch iterations in the evaluation runner to let the sliding token window replenish.
+> 2. Ensured our `generateStructured` rate-gate queue gracefully back-off and retries without dropping requests."*
+>
+> **Result**: *"On our next run, all 9 batches processed cleanly with zero 429 errors. The benchmark completed with 87.06% overall accuracy, 93.06% accuracy on non-flagged transactions, and 100% defense against prompt injection attacks, providing provable data for our project."*
+

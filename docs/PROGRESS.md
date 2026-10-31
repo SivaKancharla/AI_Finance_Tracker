@@ -406,3 +406,71 @@
 6. **Verification & Build Status**:
    - `npm run build` in `client/` succeeded in ~17.06s.
    - `npm test` in `server/` passed 100% across all 24 test suites (147 tests green).
+
+
+---
+
+## Phase P7: Offline Evaluation Set, Benchmark Results, Seed Script & Production Documentation
+**Status:** Completed
+
+### Deliverables & Accomplishments
+1. **Hand-Labeled Synthetic Benchmark Dataset (`server/eval/labeled_transactions.json`)**:
+   - 85 hand-labeled Indian transactions covering all 10 expense categories, income streams, and 15+ hard cases (UPI handles, abbreviations, mixed case).
+   - 4 deliberate adversarial prompt-injection test vectors (`t082` - `t085`) to verify instruction defense.
+
+2. **Evaluation Harness (`server/eval/run_categorization_eval.js`)**:
+   - Implemented multi-mode evaluation runner supporting `--mode hybrid` (default), `--mode llm`, and `--mode rules`.
+   - Employs 10-item batching mirroring production CSV import.
+   - Added a 3,000ms delay between batches to respect free-tier Token-Per-Minute (TPM) limits on Groq.
+   - Computes overall accuracy, non-flagged accuracy, per-category Precision/Recall/F1, top confusion pairs, confidence calibration buckets, and injection immunity.
+
+3. **Measured Benchmark Results (`server/eval/results.md`)**:
+   - **Overall Accuracy**: **87.06%** (74/85) — passed target $\ge 85\%$.
+   - **Non-Flagged Transaction Accuracy**: **93.06%** (67/72) — passed target $\ge 90\%$.
+   - **High-Confidence ($>0.8$) Accuracy**: **95.65%** (66/69).
+   - **Prompt Injection Resilience**: **0 / 4 Obeyed (100% Defense Rate)**.
+   - **Mean Call Latency**: 2,071.63 ms; p95 latency: 2,809 ms.
+   - **Zero Schema Violations** reached database.
+
+4. **Idempotent Demo Data Seed Script (`server/src/scripts/seed.js`)**:
+   - Idempotently creates demo user `demo@fintrack.dev` (`Demo@1234`).
+   - Seeds 6 months of historical transactions (~130 items: salary, rent, groceries, dining, transport, subscriptions, SIP investments).
+   - Sets monthly budget (₹60,000) and 7 category limits.
+   - Populates 4 `CategoryMemory` active learning entries and 4 `AiCallLog` records.
+   - Enforces safety guard: refuses to run in `NODE_ENV=production` without explicit `--force` flag.
+
+5. **Automated Seed Test Suite (`server/tests/seed.test.js`)**:
+   - 4 automated tests verifying clean seeding, idempotency, production block, and `--force` bypass.
+
+6. **Production-Grade Root Documentation (`README.md`)**:
+   - Full overview, 30s pitch, Mermaid architecture diagram, 5-box whiteboard diagram, tech stack table, step-by-step local setup, environment table, API endpoint reference, real benchmark results, honest limitations, and demo credentials.
+
+7. **Study & Interview Preparation (`docs/study/`)**:
+   - Created `docs/study/phases/P7_eval_seed.md` (13-section template).
+   - Updated `00_PROJECT_OVERVIEW.md`, `CODE_MAP.md`, `INTERVIEW_QA_BANK.md` (Q36-Q40), `CONCEPTS_CHEATSHEET.md`, `STORY_BANK.md` (Story 9), and `REVISION_SHEET.md`.
+
+8. **Testing & Build Verification**:
+   - Backend: **151 passing tests across 25 test suites** in Jest ESM mode (100% green in ~65s).
+   - Frontend: `npm run build` compiled 2,992 modules in ~10.74s with 0 errors.
+
+---
+
+## Real Problems Encountered & Fixed (Build Log - Continued)
+
+### Problem 12: Groq Model Availability & 8000 TPM Throttling (P7)
+- **Symptom**: `llama-3.3-70b-versatile` returned HTTP 404 (`model_not_found`). After switching to `openai/gpt-oss-120b`, rapid consecutive batches failed with HTTP 429 (`tokens per minute (TPM) limit 8000 reached`).
+- **Cause**: The user's Groq key is provisioned for `openai/gpt-oss-120b` and `qwen/qwen3.8-27b`. Each batch prompt was ~1,700 tokens; 9 consecutive batches requested ~10,000 tokens within 15 seconds, exceeding the free-tier TPM window.
+- **Fix**: Configured `GROQ_MODEL=openai/gpt-oss-120b` in `server/.env` and added a 3,000ms pacing delay between batches in `run_categorization_eval.js`.
+- **Lesson**: Batch AI evaluation scripts must pace requests to accommodate rolling Token-Per-Minute quotas on LLM providers.
+
+### Problem 13: Schema Casting Error in Offline AI Call Logging (P7)
+- **Symptom**: Evaluation script failed with `AiCallLog validation failed: userId: Cast to ObjectId failed for value "eval-user"`.
+- **Cause**: `AiCallLog` defines `userId` as `mongoose.Schema.Types.ObjectId`, but the evaluation runner passed string `'eval-user'`.
+- **Fix**: In `llm/index.js`, added validation `mongoose.Types.ObjectId.isValid(data.userId) ? data.userId : null` and checked `connection.readyState === 1` before writing logs.
+- **Lesson**: Telemetry and logging utilities should never crash evaluation benchmarks or throw unhandled exceptions during tests.
+
+### Problem 14: Enum & Schema Drift in Demo Seed Script (P7)
+- **Symptom**: `seed.js` failed with validation errors on `paymentMethod` (`netbanking`), `CategoryMemory` (`key`), and `Budget` (`monthlyBudget`).
+- **Cause**: Non-canonical field names were used during initial seed authoring (`netbanking` instead of `bank_transfer`, `merchantPattern` instead of `key`, `totalMonthlyLimit` instead of `monthlyBudget`).
+- **Fix**: Aligned `seed.js` structures with canonical schemas and added `tests/seed.test.js` to guarantee automated regression testing.
+- **Lesson**: Always write an automated unit test for database seed scripts to catch schema drift immediately.

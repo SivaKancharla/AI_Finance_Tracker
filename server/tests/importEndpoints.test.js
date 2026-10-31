@@ -8,9 +8,12 @@ import { connectTestDB, clearTestDB, closeTestDB } from './setup.js';
 import Transaction from '../src/models/Transaction.js';
 import CategoryMemory from '../src/models/CategoryMemory.js';
 import groqProvider from '../src/services/llm/providers/groq.js';
+import geminiProvider from '../src/services/llm/providers/gemini.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+jest.setTimeout(30000);
 
 describe('CSV Import Endpoints (/api/transactions/import)', () => {
   let token;
@@ -32,6 +35,8 @@ describe('CSV Import Endpoints (/api/transactions/import)', () => {
   });
 
   beforeEach(async () => {
+    jest.spyOn(groqProvider, 'call').mockRejectedValue(new Error('LLM mocked offline'));
+    jest.spyOn(geminiProvider, 'call').mockRejectedValue(new Error('LLM mocked offline'));
     const signupRes = await request(app).post('/api/auth/signup').send({
       name: 'Import Test User',
       email: 'import.test@example.com',

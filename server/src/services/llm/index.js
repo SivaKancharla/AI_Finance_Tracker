@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import env from '../../config/env.js';
 import AiCallLog from '../../models/AiCallLog.js';
 import { rateGate } from './rateGate.js';
@@ -45,8 +46,11 @@ function cleanJsonOutput(text) {
  */
 async function logAiCall(data) {
   try {
+    if (!mongoose.connection || mongoose.connection.readyState !== 1) return;
+  } catch (_) { return; }
+  try {
     await AiCallLog.create({
-      userId: data.userId || null,
+      userId: (mongoose.Types && mongoose.Types.ObjectId.isValid(data.userId)) ? data.userId : null,
       task: data.task,
       provider: data.provider,
       model: data.model,

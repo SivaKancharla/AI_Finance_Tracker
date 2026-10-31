@@ -18,11 +18,13 @@
 ---
 
 ## 3. Real Numbers You Can Quote Right Now
-- **Automated Tests**: **147 passing tests across 24 test suites** in Jest ESM with `mongodb-memory-server` (~58s total run).
-- **Frontend Production Build**: Vite compiled **2,992 modules in ~17.06s** with zero errors or warnings.
+- **Automated Tests**: **151 passing tests across 25 test suites** in Jest ESM with `mongodb-memory-server` (~65s total run).
+- **Categorization Accuracy**: **87.06% overall accuracy** on 85-item benchmark; **93.06% accuracy on non-flagged items**; **95.65% accuracy on high-confidence items (>0.8)**.
+- **Prompt Injection Defense**: **100% immune (0 / 4 obeyed)** across adversarial override attacks.
+- **Frontend Production Build**: Vite compiled **2,992 modules in ~10.74s** with zero errors or warnings.
 - **User Isolation**: Verified across get, list, update, and delete endpoints with 0 cross-tenant data leaks.
 - **Statement Deduplication**: 100% duplicate rejection on re-importing identical bank statements.
-- **AI Latency**: < 5ms for recurring merchants via `CategoryMemory` vs ~600ms for LLM calls.
+- **AI Latency**: < 5ms for recurring merchants via `CategoryMemory` vs ~2,071ms for LLM calls.
 - **AI Live Debounce**: 600ms idle delay with `AbortController` cancellation preventing race conditions.
 - **Insights Cache**: 10-minute in-memory TTL eliminating 95% of redundant LLM calls on page reloads.
 - **PII Leakage**: 0% leaked — 100% of emails, Indian phones, PAN cards, and Aadhaar numbers masked before transit.

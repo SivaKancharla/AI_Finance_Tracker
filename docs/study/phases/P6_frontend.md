@@ -311,3 +311,4 @@ In Phase P7, we build the offline evaluation harness:
 - Generates `server/eval/results.md` with true accuracy, confusion matrix, and latency percentiles.
 - Comprehensive seed script (`npm run seed`) creating the demo user with 6 months of historical transactions.
 - Final README and portfolio documentation.
+

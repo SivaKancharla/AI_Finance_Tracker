@@ -192,3 +192,28 @@
 ### Cumulative Layout Shift (CLS) & Skeletons
 - **Plain Meaning**: A Core Web Vital metric measuring visual stability. Skeletons reserve layout space with animated placeholder shapes so content doesn't abruptly push surrounding elements when loaded.
 - **Where it appears in FinTrack**: `SkeletonCard` and `SkeletonChart` maintain fixed heights while dashboard summary and Recharts data load.
+
+---
+
+## 10. Machine Learning Evaluation, Metrics & Data Seeding (Phase P7)
+
+### Precision, Recall & F1 Score
+- **Plain Meaning**: Precision answers "Of all items predicted as X, what percentage was actually X?" (avoids false positives). Recall answers "Of all actual X items in the dataset, what percentage did we catch?" (avoids false negatives). F1 is their harmonic mean: $2 \cdot \frac{P \cdot R}{P + R}$.
+- **Where it appears in FinTrack**: `run_categorization_eval.js` and `results.md` evaluate all 13 financial categories independently to detect class-imbalance blind spots.
+
+### Confusion Matrix
+- **Plain Meaning**: An $N \times N$ matrix mapping actual ground-truth classes (rows) against predicted classes (columns), highlighting recurring classification confusions between pairs of categories.
+- **Where it appears in FinTrack**: `results.md` Section 3 tracks top confusions (e.g. `Other -> Shopping`, `Food -> Shopping`).
+
+### Confidence Calibration
+- **Plain Meaning**: Assessing whether a model's self-reported probability/confidence score reflects its true probability of being correct (e.g. predictions with confidence > 0.8 should have $\ge 80\%$ accuracy).
+- **Where it appears in FinTrack**: `run_categorization_eval.js` tiers predictions into $>0.8$, $0.6-0.8$, and $<0.6$ buckets. High-confidence items achieved **95.65%** real accuracy.
+
+### Prompt Injection Immunity & XML Scoping
+- **Plain Meaning**: A security vulnerability where untrusted user input contains malicious natural language instructions that override the LLM's system prompt. Mitigated by wrapping user input inside explicit XML boundary tags (`<transactions>...</transactions>`) and instructing the model to treat XML text strictly as data.
+- **Where it appears in FinTrack**: Evaluated with 4 adversarial injection vectors in `labeled_transactions.json` (`t082` - `t085`); achieved 100% defense rate.
+
+### Idempotency in Database Operations
+- **Plain Meaning**: A property of an operation where applying it multiple times produces the identical outcome as applying it once, with no side effects or record duplication.
+- **Where it appears in FinTrack**: `server/src/scripts/seed.js` can be executed repeatedly without causing duplicate key errors or bloating demo user records.
+

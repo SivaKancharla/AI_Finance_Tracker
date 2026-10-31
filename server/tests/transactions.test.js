@@ -1,7 +1,10 @@
+import { jest } from '@jest/globals';
 import request from 'supertest';
 import app from '../src/app.js';
 import { connectTestDB, clearTestDB, closeTestDB } from './setup.js';
 import CategoryMemory from '../src/models/CategoryMemory.js';
+import groqProvider from '../src/services/llm/providers/groq.js';
+import geminiProvider from '../src/services/llm/providers/gemini.js';
 
 describe('Transactions Endpoints (/api/transactions)', () => {
   let token;
@@ -12,6 +15,7 @@ describe('Transactions Endpoints (/api/transactions)', () => {
 
   afterEach(async () => {
     await clearTestDB();
+    jest.restoreAllMocks();
   });
 
   afterAll(async () => {
@@ -19,6 +23,8 @@ describe('Transactions Endpoints (/api/transactions)', () => {
   });
 
   beforeEach(async () => {
+    jest.spyOn(groqProvider, 'call').mockRejectedValue(new Error('LLM mocked offline'));
+    jest.spyOn(geminiProvider, 'call').mockRejectedValue(new Error('LLM mocked offline'));
     const signupRes = await request(app).post('/api/auth/signup').send({
       name: 'Test User',
       email: 'test@example.com',
