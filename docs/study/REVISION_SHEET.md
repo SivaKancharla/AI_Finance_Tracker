@@ -32,7 +32,7 @@
 - **Outbound Rate Limiting**: 10 RPM client-side `RateGate` preventing third-party quota exhaustion.
 - **Rate Limits**: 300 req/15m for API, 20 req/15m for Auth, 30 req/15m for AI.
 - **Forecasting Confidence**: Clamped to 30%–90%, penalized dynamically by spending volatility ($CV$).
-- **Container Footprint**: Server ~140MB (`node:20-alpine`, `USER node`), Client ~25MB (`nginx:alpine` with gzip & `try_files`).
+- **Cloud Deployment**: Native Node.js web service on Render, React SPA on Vercel, MongoDB Atlas M0.
 - **CI Pipeline**: ~70s full run (151 backend tests + Vite production build) with 0 API secrets required.
 
 ---
@@ -47,7 +47,7 @@
 7. **Per-User `CategoryMemory`**: Learns user category corrections instantly with zero fine-tuning costs; never lets LLM overwrite user edits.
 8. **Client-Side Outbound Rate Gate (10 RPM)**: Protects app from provider 429 errors on free tiers.
 9. **Defense-in-Depth PII Masking**: Automatically strips sensitive IDs (PAN, Aadhaar, phones) before sending to external AI APIs.
-10. **Multi-Stage Docker & In-Memory Tests**: Hardened non-root containers (`node:20-alpine`, `nginx:alpine`); 151 integration tests run in RAM with zero external mocks or secrets.
+10. **Cloud Deployment & In-Memory Hermetic Tests**: SPA rewrites on Vercel, `trust proxy` on Render; 151 integration tests run in RAM with zero external mocks or secrets.
 
 ---
 

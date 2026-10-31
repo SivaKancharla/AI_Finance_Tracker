@@ -307,31 +307,31 @@
 
 ---
 
-## 12. Deployment, Containers, Docker & CI/CD (Phase P8)
+## 12. Cloud Deployment & Production Operations (Phase P8)
 
-#### Q41: What is the fundamental difference between a Docker Container and a Virtual Machine?
-- **Tags**: `[MUST]` `[All Roles]` `[DevOps|Backend]`
-- **15-second answer**: VMs virtualize physical hardware and each runs a full guest OS kernel; containers virtualize at the OS level and share the host Linux kernel.
-- **60-second spoken answer**: *"A Virtual Machine runs a hypervisor (Type 1 or 2) that virtualizes CPU, RAM, and storage, running a complete guest operating system with its own kernel. This makes VMs heavy (gigabytes), slow to boot, and memory-intensive. Docker containers run directly on top of the host Linux kernel, using kernel namespaces for process isolation and cgroups for resource metering. Containers package only the application binaries and libraries, booting in milliseconds and using minimal memory overhead."*
+#### Q41: How did you deploy your full-stack application to the cloud, and what architecture does it use?
+- **Tags**: `[MUST]` `[All Roles]` `[Backend|Full-Stack]`
+- **15-second answer**: The backend Node/Express API runs on Render with a MongoDB Atlas cluster; the React frontend is hosted on Vercel with SPA routing rewrites.
+- **60-second spoken answer**: *"I deployed FinTrack using a modern cloud separation of concerns: the backend Express API runs on Render connected to a managed MongoDB Atlas M0 cluster via an encrypted `mongodb+srv` connection string. The frontend React single-page app is deployed on Vercel's global edge network. Environment variables (`FRONTEND_URL`, `MONGODB_URI`, `JWT_SECRET`, and LLM keys) are injected securely via host environment managers rather than committed to source control, and CORS is restricted to our deployed frontend origin."*
 
-#### Q42: Why use Multi-Stage Docker builds, and how did it benefit your project?
-- **Tags**: `[MUST]` `[Product|Startup]` `[DevOps]`
-- **15-second answer**: Multi-stage builds separate the compile-time environment from the runtime container, drastically reducing final image size and attack surface.
-- **60-second spoken answer**: *"In our `server/Dockerfile`, Stage 1 installs native build toolchains (Python, make, gcc) and runs `npm ci --omit=dev`. Stage 2 starts from a fresh, clean `node:20-alpine` base and copies only the production `node_modules` and source code. Compilers, npm caches, and intermediate layers are discarded. This shrank our server image from over 900MB down to ~140MB and eliminated unnecessary binaries that could contain vulnerabilities."*
+#### Q42: What is a reverse proxy, and why did you configure `trust proxy` in Express?
+- **Tags**: `[MUST]` `[Security|Backend]`
+- **15-second answer**: A reverse proxy routes incoming client requests to backend services; `app.set('trust proxy', 1)` enables Express to read the real client IP from the `X-Forwarded-For` header.
+- **60-second spoken answer**: *"When hosting on cloud platforms like Render or Railway, incoming traffic hits their edge load balancer or reverse proxy before reaching the Node.js process. By default, Express ignores the `X-Forwarded-For` header and sees the proxy's IP address for all incoming requests. This would cause `express-rate-limit` to group all users together, quickly exhausting rate limits globally. By configuring `app.set('trust proxy', 1)` in `app.js`, Express trusts the front-facing proxy and extracts the genuine client IP address for accurate per-user rate limiting."*
 
-#### Q43: Why is running containers as the root user dangerous in production?
-- **Tags**: `[MUST]` `[Security|DevOps]`
-- **15-second answer**: If an application vulnerability leads to container escape, an attacker inherits root privileges over the host system.
-- **60-second spoken answer**: *"By default, Docker containers run as UID 0 (`root`). If an attacker executes a container breakout via a Linux kernel exploit, they immediately gain root access to the host machine. To follow the Principle of Least Privilege, our `server/Dockerfile` explicitly switches to `USER node` after dependency installation. Even if the application is compromised, the attacker has no write access to system directories or root capabilities on the host."*
+#### Q43: What happens when a user refreshes a React SPA route like `/dashboard` in production, and how did you prevent 404s?
+- **Tags**: `[MUST]` `[Frontend|All Roles]`
+- **15-second answer**: In an SPA, nested routes exist only in client memory. We added rewrite rules in `vercel.json` directing unmatched requests to `/index.html`.
+- **60-second spoken answer**: *"In a Single-Page Application, routes like `/dashboard` or `/transactions` are virtual routes managed by React Router in the browser. There is no physical `/dashboard/index.html` file on the web server. If a user refreshes the page or bookmarks a link, a standard web server looks for that physical path and returns an HTTP 404. To fix this, I created `client/vercel.json` with a rewrite rule routing `/(.*)` to `/index.html`. The server serves `index.html` with status 200, and React Router mounts and displays the requested route seamlessly."*
 
-#### Q44: What is the purpose of Nginx's `try_files` directive in React Single-Page Applications?
-- **Tags**: `[MUST]` `[Frontend|DevOps]`
-- **15-second answer**: It redirects all non-file route requests to `index.html` so client-side React Router handles URLs without throwing 404 errors on browser refresh.
-- **60-second spoken answer**: *"In a Single-Page Application, routes like `/dashboard` or `/transactions` exist purely in React's client-side memory; there is no physical file called `/dashboard/index.html` on disk. When a user refreshes the page, Nginx would normally return an HTTP 404. With `try_files $uri $uri/ /index.html;`, Nginx first checks if the requested URI matches a real file (like a JS bundle or image); if not, it serves `/index.html` with HTTP 200, allowing React Router to parse the pathname and render the correct view."*
+#### Q44: How do you handle cold-start delays on free cloud hosting platforms like Render?
+- **Tags**: `[MUST]` `[Product|Startup]`
+- **15-second answer**: Free tiers sleep after inactivity; we detect requests taking over 5 seconds and display an informative animated banner on the login screen.
+- **60-second spoken answer**: *"On free cloud tiers like Render, web services spin down after 15 minutes of idle time. The first subsequent request triggers server provisioning, taking 30 to 50 seconds to respond. Rather than letting the user think the application has crashed or frozen, I implemented a 5-second timer in `Login.jsx`: if the login API request takes longer than 5 seconds, an animated banner appears explaining that the cloud backend is waking up. Once the server is warm, all subsequent requests respond in under 100ms."*
 
-#### Q45: How does your GitHub Actions CI pipeline run integration tests without needing production API keys?
-- **Tags**: `[MUST]` `[Testing|DevOps]`
-- **15-second answer**: All 151 backend tests run against an in-memory MongoDB instance with external LLM providers mocked at the module boundary.
-- **60-second spoken answer**: *"We specifically architected our test harness to eliminate external dependencies. The database uses `mongodb-memory-server` in RAM, and LLM calls to Gemini and Groq are mocked using Jest spies at the provider boundary. This means our GitHub Actions pipeline runs on every pull request with zero external network calls, zero quota consumption, and zero secret keys configured in GitHub repository secrets, guaranteeing fast, reliable, and secure CI runs."*
+#### Q45: How do you protect API credentials and secrets in cloud deployments?
+- **Tags**: `[MUST]` `[Security|All Roles]`
+- **15-second answer**: Secrets are never committed to git; they are injected via platform environment variables and validated at server boot using Zod.
+- **60-second spoken answer**: *"First, all `.env` files are git-ignored and only `.env.example` templates exist in source control. In production, API keys (Groq, Gemini, MongoDB URI, and JWT secrets) are configured in the cloud host dashboard (Render/Railway). When the server starts up, `server/src/config/env.js` validates every required variable at runtime using Zod. If any required credential is missing or malformed, the process fails fast with a descriptive error rather than failing unpredictably mid-request."*
 
 

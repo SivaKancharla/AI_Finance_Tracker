@@ -121,7 +121,7 @@ Every claim below is on the student's resume. Each must be **true, demonstrable,
 | **P5** | Budget optimizer, insights, security hardening pass | `02` §11–§13 | Endpoints tested; deterministic fallbacks verified; security checklist ticked |
 | **P6** | Frontend (all pages and flows) | `03` | Every user flow in `03` §9 works end to end against the real server |
 | **P7** | Eval script, seed script, tests, README, EXPLAINER, screenshots | `04` §1–§5 | `npm run eval:categorize` produces `eval/results.md`; `npm test` green; README complete |
-| **P8** | Deployment, optional Docker + CI | `04` §6 | Live URLs work with the seeded demo account |
+| **P8** | Deployment & Cloud Production Readiness | `04` §6 | Live URLs work with the seeded demo account |
 
 ---
 

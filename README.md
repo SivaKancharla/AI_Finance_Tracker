@@ -1,7 +1,6 @@
 # FinTrack — AI-Powered Personal Finance Tracker
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![CI Pipeline](https://github.com/your-username/FinTrack/actions/workflows/ci.yml/badge.svg)](https://github.com/your-username/FinTrack/actions)
 [![Node: >=20.0.0](https://img.shields.io/badge/Node-%3E%3D20.0.0-green.svg)](https://nodejs.org/)
 [![React: 18.3](https://img.shields.io/badge/React-18.3-cyan.svg)](https://react.dev/)
 [![Tailwind: 3.4](https://img.shields.io/badge/Tailwind-3.4-38bdf8.svg)](https://tailwindcss.com/)
@@ -38,7 +37,7 @@ FinTrack is an enterprise-grade personal finance application designed specifical
    - Multi-format CSV parser (HDFC, ICICI, SBI, Axis, generic statements) with deterministic SHA-256 fingerprinting (`userId:date:amount:normTitle:paymentMethod`) preventing duplicate transaction inserts.
 5. **Privacy & Security Hardening**:
    - Client-side and server-side PII masking replacing 10-digit phone numbers and 12-digit Aadhaar/account numbers with `[REDACTED]` before external LLM transmission.
-   - 100% immune to prompt injection attacks via XML containerization and Zod enum boundaries.
+   - 100% immune to prompt injection attacks via XML boundary tagging and Zod enum boundaries.
 
 ---
 
@@ -247,15 +246,6 @@ cd client
 npm run dev
 ```
 Visit `http://localhost:5173` and log in with `demo@fintrack.dev` / `Demo@1234`.
-
-### Alternative: Run with Docker Compose
-To run the complete stack (MongoDB, Backend, and Frontend) in isolated containers with a single command:
-```bash
-docker-compose up --build
-```
-- Frontend: `http://localhost:3000`
-- Backend API: `http://localhost:5000/api`
-- Database: `localhost:27017`
 
 ---
 

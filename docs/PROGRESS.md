@@ -528,3 +528,43 @@
 - **Cause**: Express defaults to ignoring the `X-Forwarded-For` header unless `trust proxy` is explicitly enabled.
 - **Fix**: Added `app.set('trust proxy', 1);` in `server/src/app.js`.
 - **Lesson**: Always enable `trust proxy` in Express when deploying behind front-facing load balancers, CDN edges, or reverse proxies.
+
+---
+
+## Phase P8 Update: Docker and CI removed (owner decision)
+**Status:** Completed
+
+### Context & Decision
+The project owner decided that Docker, containers, and GitHub Actions CI are out of scope for this portfolio repository. The focus of Phase P8 is streamlined cloud deployment (Render + Vercel + MongoDB Atlas), production reverse proxy configuration (`trust proxy`), SPA client routing rewrites, health check monitoring, and resilient free-tier cold-start UX.
+
+### Files Removed
+1. `docker-compose.yml` (multi-container orchestration)
+2. `server/Dockerfile` (multi-stage backend container build)
+3. `server/.dockerignore` (Docker build exclusions for backend)
+4. `client/Dockerfile` (multi-stage frontend container build)
+5. `client/.dockerignore` (Docker build exclusions for frontend)
+6. `client/nginx.conf` (Nginx container server configuration)
+7. `.github/workflows/ci.yml` (GitHub Actions workflow file and `.github/` folder)
+8. `docs/study/phases/P8_deployment_docker_ci.md` (replaced by `docs/study/phases/P8_deployment.md`)
+
+### Files Edited
+1. `README.md`: Removed CI badge and Docker Compose section; retained local Node setup and cloud deployment steps (Render / Vercel / Atlas). Replaced "XML containerization" wording with "XML boundary tagging".
+2. `docs/00_START_HERE.md`: Updated P8 roadmap title from "Deployment, optional Docker + CI" to "Deployment & Cloud Production Readiness".
+3. `docs/04_TESTING_EVAL_DEPLOY_RESUME.md`: In Section 6.3, added note: `*Docker and CI skipped by owner decision.*`. In Section 7.3, removed Docker and GitHub Actions from the resume skills line.
+4. `server/src/app.js`: Updated comment above `app.set('trust proxy', 1);` to clarify handling for cloud reverse proxies (e.g., Render, AWS ALB) rather than Nginx.
+5. `client/vercel.json`: Retained clean SPA client-side rewrite rules (`"source": "/(.*)", "destination": "/index.html"`).
+6. `render.yaml`: Verified and retained native Node.js web service specification (`env: node`, `buildCommand: cd server && npm ci`, `startCommand: cd server && npm start`, `healthCheckPath: /health`).
+7. `docs/study/00_PROJECT_OVERVIEW.md`: Removed Docker, Docker Compose, and GitHub Actions from tech stack table and notes.
+8. `docs/study/CODE_MAP.md`: Replaced container/CI rows with `render.yaml` and `client/vercel.json`.
+9. `docs/study/CONCEPTS_CHEATSHEET.md`: Replaced Section 11 with "Cloud Deployment, Reverse Proxies & Production Readiness" (SPA client-side routing, `trust proxy`, health checks, cold-start handling).
+10. `docs/study/INTERVIEW_QA_BANK.md`: Replaced Section 12 with Cloud Deployment Q&As (Q41–Q45: cloud deployment, `trust proxy`, SPA routing rewrites, Render cold starts, secrets management).
+11. `docs/study/REVISION_SHEET.md`: Removed container and CI references; highlighted in-memory hermetic testing and cloud deployment architecture.
+12. `docs/study/STORY_BANK.md`: Updated Story 10 to focus on "Cloud Deployment & Designing for Free-Tier Cold Starts".
+13. `docs/study/phases/P7_eval_seed.md`: Updated "What's Next" to reference cloud deployment.
+14. `docs/study/phases/P8_deployment.md`: Created focused Phase P8 study doc for cloud deployment, Vercel, Render, Atlas, reverse proxies, and cold-start UX.
+
+### Verification Status
+- Backend test suite: 151 / 151 tests passing across 25 suites (~60s).
+- Frontend production build: Vite bundle cleanly compiled (2,992 modules in ~11s).
+- Verified `/health` check and local execution with standard npm scripts.
+

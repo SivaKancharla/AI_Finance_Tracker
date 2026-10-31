@@ -13,7 +13,7 @@ import aiRoutes from './routes/ai.routes.js';
 
 const app = express();
 
-// Trust reverse proxy for client IP address resolution (e.g. Render, Railway, Nginx)
+// Trust reverse proxy for client IP address resolution (e.g. Render, Railway, AWS ALB)
 app.set('trust proxy', 1);
 
 // Security headers

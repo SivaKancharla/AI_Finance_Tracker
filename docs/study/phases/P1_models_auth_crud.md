@@ -204,7 +204,7 @@ transactionSchema.index(
    - **Symptom**: Test suite failed with `Exceeded timeout of 5000 ms for a hook in beforeAll`.
    - **Cause**: On the initial test run, `mongodb-memory-server` had to download the 600MB official MongoDB binary, which took ~45 seconds on the local network, exceeding Jest's default 5-second hook timeout.
    - **Fix**: Added `jest.setTimeout(30000)` in `server/tests/setup.js`.
-   - **Lesson**: Long-running setup tasks like downloading binaries or spinning up test containers must be accounted for in test runner timeout configurations.
+   - **Lesson**: Long-running setup tasks like downloading binaries or spinning up in-memory databases must be accounted for in test runner timeout configurations.
 
 ---
 

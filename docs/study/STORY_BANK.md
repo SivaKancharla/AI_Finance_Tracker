@@ -173,19 +173,19 @@
 
 ---
 
-## Story 10: Productionizing with Multi-Stage Docker Containers & Zero-Secret CI `[DRAFT - verify]`
-- **Theme**: DevOps, Container Security, CI/CD Automation, Production Operations
-- **When to tell this**: *"Tell me how you deployed or containerized your application,"* or *"How do you structure your automated testing pipeline in CI/CD?"*
+## Story 10: Cloud Deployment & Designing for Free-Tier Cold Starts `[DRAFT - verify]`
+- **Theme**: Cloud Deployment, Production Operations, UX Design, Reverse Proxies
+- **When to tell this**: *"Tell me about how you deployed your application to production,"* or *"How do you handle infrastructure limitations and latency in full-stack apps?"*
 
 ### Spoken Answer (60–90 seconds)
-> **Situation**: *"When completing the deployment phase of FinTrack in Phase P8, I wanted the application to run identically on developer laptops, Docker hosts, and CI/CD pipelines without environment inconsistencies."*
+> **Situation**: *"In Phase P8, I deployed FinTrack's full-stack architecture to production cloud environments: the Express backend on Render, MongoDB on MongoDB Atlas M0, and the React frontend on Vercel."*
 >
-> **Task**: *"Initial Docker attempts resulted in a bloated 1.1GB container because development dependencies, C++ compiler toolchains, and root privileges were included in the runtime image. Additionally, our GitHub Actions pipeline needed to test the full backend without leaking cloud API keys in repository secrets."*
+> **Task**: *"Free-tier cloud hosting providers like Render put idle web services to sleep after 15 minutes of inactivity. During manual testing, I noticed that when a new recruiter or evaluator opened the app after a quiet period, the initial login request hung for nearly 40 seconds with no visual feedback. Users could easily assume the server had crashed and abandon the demo."*
 >
-> **Action**: *"I rebuilt our containerization using multi-stage builds. In `server/Dockerfile`, Stage 1 builds dependencies, while Stage 2 copies only production `node_modules` into a lean `node:20-alpine` image running as unprivileged `USER node`. For the frontend, I used a multi-stage build that compiles Vite assets and serves them via `nginx:alpine` configured with gzip and `try_files` SPA routing.
+> **Action**: *"I designed an empathetic frontend cold-start detection mechanism in `Login.jsx`. I set up a 5-second timer that monitors in-flight authentication requests: if the API takes longer than 5 seconds to respond, an animated status banner appears explaining that the free cloud backend is spinning up from sleep and asking for their patience. 
 > 
-> For CI/CD, I configured `.github/workflows/ci.yml`. Because our entire 151-test backend suite runs against `mongodb-memory-server` and mocks external LLM APIs at the provider boundary, our CI pipeline runs on every push and PR with zero secret dependencies, completing in under 75 seconds."*
+> Additionally, on the backend in `server/src/app.js`, I configured `app.set('trust proxy', 1)` to ensure that Render's edge load balancer correctly passes client IP addresses through the `X-Forwarded-For` header, preventing rate-limiter IP flattening."*
 >
-> **Result**: *"Container image size dropped by over 85% (~140MB server, ~25MB client), security was hardened with non-root execution, and our GitHub Actions pipeline guarantees continuous quality without risk of credential leakage."*
+> **Result**: *"The deployment handles cold starts transparently, rate limiting behaves accurately per client IP, and evaluators have a smooth, reassuring user experience even on zero-budget infrastructure."*
 
 

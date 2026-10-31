@@ -97,8 +97,7 @@ When an interviewer asks you to draw your system on a whiteboard, draw these 5 b
 | **Redux Toolkit** | Client state management | Centralized caching for auth state, categories meta, and transactions; prevents prop-drilling. |
 | **Tailwind CSS 3.4** | UI Styling | Rapid utility-first styling. Pinned to 3.4 to avoid breaking configuration changes in Tailwind v4. |
 | **Jest + Supertest** | Testing framework | Native integration with `mongodb-memory-server` allowing 100% isolated database integration testing without external dependencies. |
-| **Docker & Docker Compose** | Containerization & Orchestration | Multi-stage `node:20-alpine` and `nginx:alpine` containers with non-root security; 1-command startup. |
-| **GitHub Actions** | Automated CI/CD | Runs integration tests and production Vite builds on every commit with zero API secrets. |
+| **Render + Vercel** | Cloud Deployment | Native Node.js web service on Render, static React SPA on Vercel with client-side routing rewrites. |
 
 ---
 
@@ -126,7 +125,7 @@ When an interviewer asks you to draw your system on a whiteboard, draw these 5 b
 | **P1** | Per-User Merchant Learning Memory | Updating a transaction category immediately writes a high-confidence memory entry that overrides future rules; user overrides are protected | [`server/src/models/CategoryMemory.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/models/CategoryMemory.js), [`transaction.controller.js:updateTransaction`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/controllers/transaction.controller.js) |
 | **P1** | Robust Multi-key Indexing & NoSQL Schema Design | Compound indexing on `{ userId, transactionDate }` and partial unique index on `{ userId, dedupeHash }` | [`server/src/models/Transaction.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/models/Transaction.js) |
 
-*Note: Offline Evaluation Dataset (C1 accuracy script) and Dockerization will be completed in Phases P7 and P8.*
+*Note: Offline Evaluation Dataset (C1 accuracy script) complete and verified.*
 
 ---
 

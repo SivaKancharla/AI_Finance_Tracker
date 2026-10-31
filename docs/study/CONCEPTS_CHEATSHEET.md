@@ -219,26 +219,20 @@
 
 ---
 
-## 11. Containers, Reverse Proxies & CI/CD Pipelines (Phase P8)
+## 11. Cloud Deployment, Reverse Proxies & Production Readiness (Phase P8)
 
-### Containers vs. Virtual Machines
-- **Plain Meaning**: VMs virtualize physical hardware via a hypervisor and run full guest operating systems; containers virtualize at the OS level, sharing the host Linux kernel via cgroups and namespaces for instant boot and minimal memory usage.
-- **Where it appears in FinTrack**: `server/Dockerfile` and `client/Dockerfile` package the application in isolated Linux containers.
+### SPA Client-Side Routing vs. Server-Side Routing
+- **Plain Meaning**: SPAs (Single-Page Apps) use HTML5 pushState for client-side navigation (`/dashboard`, `/transactions`). Web servers (like Vercel or Nginx) naturally look for a physical file `/dashboard/index.html`. Without rewrite rules, hitting refresh on an SPA route causes an HTTP 404.
+- **Where it appears in FinTrack**: `client/vercel.json` defines `"rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]` so all deep links fall back to `index.html`.
 
-### Multi-Stage Docker Builds
-- **Plain Meaning**: Splitting Dockerfiles into separate stages so build tools, compilers, and caches stay in temporary builder containers, copying only final production artifacts into the runtime image.
-- **Where it appears in FinTrack**: `server/Dockerfile` (dependencies $\to$ runner) and `client/Dockerfile` (Vite builder $\to$ Nginx runner); shrinks images from 1GB+ down to ~140MB and ~25MB.
+### Reverse Proxies & `trust proxy`
+- **Plain Meaning**: When an application sits behind a load balancer, CDN, or cloud host (e.g. Render, AWS ALB), all TCP connections terminate at the proxy. Express sees the incoming IP as the proxy's IP. Setting `trust proxy` tells Express to read the client's true IP from `X-Forwarded-For`.
+- **Where it appears in FinTrack**: In `server/src/app.js`, `app.set('trust proxy', 1);` enables accurate per-IP rate limiting behind Render's front proxy.
 
-### Non-Root Container Execution
-- **Plain Meaning**: Running container processes with an unprivileged user ID (`USER node`) rather than `root` to prevent host privilege escalation if a container escape occurs.
-- **Where it appears in FinTrack**: `server/Dockerfile` switches to built-in `USER node` before running `server.js`.
+### Health Checks & Liveness Monitoring
+- **Plain Meaning**: An unauthenticated, ultra-lightweight endpoint (`GET /health`) returning HTTP 200 `{ status: 'ok' }` so load balancers and orchestrators know the process is responsive.
+- **Where it appears in FinTrack**: `server/src/app.js` and `render.yaml` configure `/health` as the automated uptime probe.
 
-### SPA Routing & Nginx `try_files`
-- **Plain Meaning**: Directing web servers to fall back to `/index.html` for any URL that doesn't match a static file, allowing client-side routers (React Router) to handle page navigation without 404s.
-- **Where it appears in FinTrack**: `client/nginx.conf` (`try_files $uri $uri/ /index.html;`) and `client/vercel.json` rewrites.
-
-### Continuous Integration (CI)
-- **Plain Meaning**: Automatically building and testing every code commit on a remote server before merging, preventing regressions and broken builds from entering production.
-- **Where it appears in FinTrack**: `.github/workflows/ci.yml` runs 151 backend integration tests and Vite client builds on every push and PR.
-
-
+### Free-Tier Cold Starts & UX Resilience
+- **Plain Meaning**: Free cloud instances (Render, Railway) spin down after 15 minutes of inactivity. Booting a cold server instance takes 30-50 seconds. Without UX feedback, users assume the site is broken.
+- **Where it appears in FinTrack**: `client/src/pages/Login.jsx` starts a 5-second timer on login. If the request takes > 5s, a status banner informs the user that the free-tier backend is spinning up.

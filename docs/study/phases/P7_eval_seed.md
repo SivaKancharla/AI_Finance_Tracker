@@ -241,5 +241,5 @@ console.log(`Accuracy for confidence >= ${minConf}: ${filteredAccuracy}% (${filt
 ---
 
 ## 12. What's Next?
-In **Phase P8**, we build Docker containerization (`server/Dockerfile`, `client/Dockerfile`, `docker-compose.yml`), GitHub Actions CI/CD workflows, and production deployment configuration for MongoDB Atlas, Render, and Vercel.
+In **Phase P8**, we finalize cloud production deployment configuration for MongoDB Atlas, Render, and Vercel, including reverse proxy trust, SPA routing rewrites, and cold-start UX management.
 

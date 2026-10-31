@@ -122,7 +122,7 @@ app.use(cors({
 #### Q1: What is the purpose of a health check endpoint (`/health`)?
 - **Tags**: `[Basic]` `[Service]` `[Product]`
 - **15-second answer**: It gives deployment platforms and load balancers a lightweight way to verify that the HTTP server is running and responsive.
-- **60-second spoken answer**: *"In FinTrack, I added `GET /health` which immediately returns HTTP 200 with `{ status: 'ok' }`. Container orchestrators like Docker, Kubernetes, or cloud hosts like Render and AWS ECS ping this endpoint periodically. If the server is in a deadlock, out of memory, or failing to start, the health check fails and the platform automatically restarts the container or redirects traffic away from the unhealthy instance."*
+- **60-second spoken answer**: *"In FinTrack, I added `GET /health` which immediately returns HTTP 200 with `{ status: 'ok' }`. Cloud platforms and load balancers like Render, AWS, and GCP ping this endpoint periodically. If the server is in a deadlock, out of memory, or failing to start, the health check fails and the platform automatically restarts the instance or redirects traffic away from the unhealthy instance."*
 - **Follow-ups**:
   - *Q: Should `/health` also ping the database?* -> *A: A simple liveness check should not ping the DB so network blips don't cause crash loops; a separate `/health/ready` (readiness probe) can verify DB connectivity.*
 - **Trap**: Don't say "it's for users to check if the app is online". It is for infrastructure and load balancers.

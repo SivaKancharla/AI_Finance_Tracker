@@ -127,9 +127,7 @@ Append-only log: phase, date, what was built, decisions, deviations from the spe
 - [ ] Live demo link, credentials, and screenshots added to the README.
 
 ### 6.3 Optional (matches the Cognizant JD keywords: Docker, CI/CD)
-- **Dockerfiles** for `server/` (multi-stage, non-root user, `node:20-alpine`) and `client/` (build + static server), plus a `docker-compose.yml` with `mongo`, `server`, `client` for one-command local startup.
-- **GitHub Actions** workflow `.github/workflows/ci.yml`: on push and pull request run `npm ci`, `npm test` in `server/`, and `npm run build` in `client/`. The pipeline must not need any API keys.
-- Add a "CI passing" badge to the README.
+> *Docker and CI skipped by owner decision.*
 
 ---
 
@@ -161,7 +159,7 @@ Replace every `[X]` with numbers from `server/eval/results.md` and your real pro
 
 ### 7.3 Skills line to add (once true)
 `AI \& LLM: Gemini API, Prompt Engineering \& Structured Outputs (JSON Schema, Zod), LLM Evaluation, Fallback/Retry Design, PII Masking`
-`Cloud \& DevOps: Git, GitHub Actions, Docker` (only if Phase P8 optional items were done)
+`Cloud \& DevOps: Git, Render, Vercel, MongoDB Atlas`
 
 ---
 
