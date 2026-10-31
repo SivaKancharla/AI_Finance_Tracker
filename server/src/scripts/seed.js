@@ -45,14 +45,11 @@ export async function seedDemoData({
     ]);
   }
 
-  // 2. Create Demo User
-  const salt = await bcrypt.genSalt(10);
-  const hashedPassword = await bcrypt.hash(DEMO_PASSWORD, salt);
-
+  // 2. Create Demo User (User model pre('save') hook handles hashing)
   const demoUser = await User.create({
     name: 'Siva Kumar',
     email: DEMO_EMAIL,
-    password: hashedPassword
+    password: DEMO_PASSWORD
   });
 
   const userId = demoUser._id;
