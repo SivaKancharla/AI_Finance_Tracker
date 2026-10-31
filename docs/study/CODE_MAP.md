@@ -1,0 +1,64 @@
+# FinTrack Code Map (Cumulative)
+*A feature-to-file reference so you can find any module in under 60 seconds.*
+
+---
+
+## 1. Feature Map Table
+
+| Feature / Domain | File Path | Key Functions / Exports | One-Line Purpose | If Asked to Change X, Edit Here |
+|---|---|---|---|---|
+| **Canonical Categories & Lists** | [`server/src/constants/categories.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/constants/categories.js) | `EXPENSE_CATEGORIES`, `INCOME_CATEGORIES`, `PAYMENT_METHODS` | Single source of truth for categories and enums | To add a new category or payment method |
+| **Environment & Config** | [`server/src/config/env.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/config/env.js) | `validateEnv`, `env` | Zod schema parsing, coercion, fail-fast startup | To add a new environment variable or change default port |
+| **Express App Setup** | [`server/src/app.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/app.js) | `app` | Express configuration, Helmet, CORS, general rate limiter, 404, error handler | To add global middleware or mount a new top-level router |
+| **Server Listener** | [`server/src/server.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/server.js) | `startServer` | Database connection, HTTP listening, graceful shutdown | To handle OS termination signals (SIGINT/SIGTERM) |
+| **Database Connection** | [`server/src/config/db.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/config/db.js) | `connectDB` | Mongoose MongoDB connection helper | To modify MongoDB connection options |
+| **User Model** | [`server/src/models/User.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/models/User.js) | `User`, `userSchema.pre('save')`, `matchPassword` | User schema, bcryptjs hashing, safe object serializer | To add user profile fields (phone, avatar) |
+| **Transaction Model** | [`server/src/models/Transaction.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/models/Transaction.js) | `Transaction`, compound indexes | Core financial ledger schema, compound and partial indexes | To add transaction tags or attachments |
+| **Budget Model** | [`server/src/models/Budget.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/models/Budget.js) | `Budget`, `categoryBudgetSchema` | Monthly budget and category limit storage | To change budget structure or validation |
+| **Category Memory Model** | [`server/src/models/CategoryMemory.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/models/CategoryMemory.js) | `CategoryMemory` | Per-user learned merchant -> category mapping | To change confidence weights or memory retention |
+| **AI Call Log Model** | [`server/src/models/AiCallLog.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/models/AiCallLog.js) | `AiCallLog` | Observability schema with 30-day TTL index | To change TTL retention days or log metadata |
+| **JWT Auth Middleware** | [`server/src/middleware/auth.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/middleware/auth.js) | `protect` | Parses Bearer token, attaches `req.userId`, generic 401s | To change token header format or claims |
+| **Zod Request Validator** | [`server/src/middleware/validate.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/middleware/validate.js) | `validate(schema, source)` | Validates `req.body`, `req.query`, or `req.params` | To change validation error response format |
+| **Rate Limiters** | [`server/src/middleware/rateLimiters.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/middleware/rateLimiters.js) | `generalLimiter`, `authLimiter`, `aiLimiter` | Draft-7 IP and user rate limiting | To adjust rate limit windows or max requests |
+| **Merchant Normalization** | [`server/src/services/categorization/normalize.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/services/categorization/normalize.js) | `normalizeMerchant` | Strips payment prefixes, punctuation, numbers; extracts 3 tokens | To add new payment prefixes (e.g., 'rtgs', 'paytm') |
+| **Rule Categorizer** | [`server/src/services/categorization/ruleCategorizer.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/services/categorization/ruleCategorizer.js) | `ruleCategorize` | Keyword dictionary for deterministic categorization fallback | To add new merchant keywords or brand rules |
+| **Categorization Pipeline** | [`server/src/services/categorization/pipeline.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/services/categorization/pipeline.js) | `categorizeSingle` | Orchestrates Memory -> Rules -> Default fallback | To wire in LLM provider call (Phase P3) |
+| **Auth Controller** | [`server/src/controllers/auth.controller.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/controllers/auth.controller.js) | `signup`, `login`, `getMe`, `updateProfile`, `updatePassword`, `getAuthStats` | Authentication business logic | To customize login or profile update logic |
+| **Transaction Controller** | [`server/src/controllers/transaction.controller.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/controllers/transaction.controller.js) | `createTransaction`, `getTransactions`, `getTransactionById`, `updateTransaction`, `deleteTransaction` | Transaction CRUD, pagination, filtering, memory writing | To change sorting options or search filters |
+| **Budget Controller** | [`server/src/controllers/budget.controller.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/controllers/budget.controller.js) | `getBudget`, `setBudget`, `updateBudget` | User-scoped budget management | To change budget upsert behavior |
+| **Meta Controller & Routes** | [`server/src/controllers/meta.controller.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/controllers/meta.controller.js) | `getMeta` | Public metadata endpoint (`GET /api/meta`) | To expose new constants to the client |
+| **Auth Validation Schemas** | [`server/src/validations/auth.validation.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/validations/auth.validation.js) | `signupSchema`, `loginSchema`, `updateProfileSchema`, `updatePasswordSchema` | Zod validation schemas for auth endpoints | To change password length or email validation rules |
+| **Transaction Validation Schemas** | [`server/src/validations/transaction.validation.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/validations/transaction.validation.js) | `createTransactionSchema`, `updateTransactionSchema`, `transactionQuerySchema` | Zod validation schemas for transactions | To make description required or add new query fields |
+| **Budget Validation Schemas** | [`server/src/validations/budget.validation.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/validations/budget.validation.js) | `budgetSchema`, `categoryBudgetSchema` | Zod validation with duplicate category check | To allow duplicate category limits or add period |
+
+---
+
+## 2. Five Live Coding Scenarios (If an Interviewer Asks You to Make a Change)
+
+### 1. "Add a new category called 'Pets' or 'Charity'"
+- **Files to edit**:
+  1. [`server/src/constants/categories.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/constants/categories.js): Add `'Pets'` to `EXPENSE_CATEGORIES`.
+  2. [`server/src/services/categorization/ruleCategorizer.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/services/categorization/ruleCategorizer.js): Add `{ category: 'Pets', keywords: ['vet', 'pet', 'dog', 'cat', 'heads up for tails'] }`.
+- **Why this works**: `ALL_CATEGORIES`, validation schemas, Mongoose models, and `/api/meta` all automatically inherit from `categories.js`.
+
+### 2. "Add a new payment method called 'crypto' or 'netbanking'"
+- **Files to edit**:
+  1. [`server/src/constants/categories.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/constants/categories.js): Add `'netbanking'` to `PAYMENT_METHODS`.
+- **Why this works**: `PAYMENT_METHODS` is dynamically referenced by `Transaction.js` Mongoose enum, Zod validations, and `GET /api/meta`.
+
+### 3. "Add a `tags` array to each transaction"
+- **Files to edit**:
+  1. [`server/src/models/Transaction.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/models/Transaction.js): Add `tags: { type: [String], default: [] }`.
+  2. [`server/src/validations/transaction.validation.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/validations/transaction.validation.js): Add `tags: z.array(z.string()).optional()` to `createTransactionSchema` and `updateTransactionSchema`.
+  3. [`server/src/controllers/transaction.controller.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/controllers/transaction.controller.js): Add `tags` to destructured request body in `createTransaction` and `updateTransaction`.
+
+### 4. "Change the password minimum length from 8 to 10 characters"
+- **Files to edit**:
+  1. [`server/src/validations/auth.validation.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/validations/auth.validation.js): Update `.min(10)` on `signupSchema` and `updatePasswordSchema`.
+  2. [`server/src/models/User.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/models/User.js): Update `minlength: [10, 'Password must be at least 10 characters']`.
+
+### 5. "Change the JWT token expiration duration"
+- **Files to edit**:
+  1. [`server/.env`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/.env): Change `JWT_EXPIRE=7d` to `JWT_EXPIRE=30d` or `JWT_EXPIRE=15m`.
+  2. [`server/src/config/env.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/config/env.js): Adjust fallback default if needed.
+

@@ -80,4 +80,28 @@
      - `normalize.test.js`: 12 test cases verifying merchant normalization, prefix stripping, punctuation removal, and token truncation.
      - `meta.test.js` & `health.test.js`: Constant delivery and environment safety.
 
+6. **Interview Preparation & Study System (`docs/study/`)**:
+   - Initialized full interview coach system: `README.md`, `00_PROJECT_OVERVIEW.md`, `CODE_MAP.md`, `INTERVIEW_QA_BANK.md`, `CONCEPTS_CHEATSHEET.md`, `STORY_BANK.md`, `DEMO_SCRIPT.md`, `WEAK_SPOTS.md`, `REVISION_SHEET.md`.
+   - Completed detailed phase study documents:
+     - `docs/study/phases/P0_scaffold_tooling.md`
+     - `docs/study/phases/P1_models_auth_crud.md`
+   - Configured persistent Antigravity rules in `GEMINI.md`, `AGENTS.md`, and `docs/MASTER_PROMPT.md`.
+
+---
+
+## Real Problems Encountered & Fixed (Build Log)
+
+### Problem 1: Google GenAI Package Version Incompatibility (P0)
+- **Symptom**: `npm install` failed with `npm error notarget No matching version found for @google/genai@^0.1.2`.
+- **Cause**: Google's new official `@google/genai` Node SDK releases began at `0.2.0`.
+- **Fix**: Updated `server/package.json` to `"@google/genai": "^0.2.0"` and verified with npm dist-tags.
+- **Lesson**: Check npm registry dist-tags (`npm view <pkg> versions`) when integrating newly-released SDKs.
+
+### Problem 2: Jest Test Hook Timeout During Mongo Download (P1)
+- **Symptom**: `tests/transactions.test.js` failed with `Exceeded timeout of 5000 ms for a hook in beforeAll`.
+- **Cause**: On initial test run, `mongodb-memory-server` had to download the official 600MB MongoDB binary to cache locally. The download took ~45s, exceeding Jest's default 5000ms hook timeout.
+- **Fix**: Added `jest.setTimeout(30000)` in `server/tests/setup.js`.
+- **Lesson**: Large setup tasks like test container binary downloads must be accounted for in test runner timeout settings.
+
+
 
