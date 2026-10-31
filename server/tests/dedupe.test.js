@@ -81,3 +81,4 @@ describe('Deduplication Hash Engine (dedupe.js)', () => {
     expect(run1[2].dedupeHash).toBe(run2[2].dedupeHash);
   });
 });
+

@@ -40,3 +40,4 @@ Date,Narration,Withdrawal,Deposit,Category
 31/02/2026,INVALID DATE ROW LEAP FAIL,500.00,,
 2026-10-15,,400.00,,
 2026-10-16,ZERO AMOUNT TEST,0.00,,
+

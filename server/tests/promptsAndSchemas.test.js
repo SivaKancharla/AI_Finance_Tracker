@@ -71,18 +71,18 @@ describe('Prompts & Schemas', () => {
     it('should validate BudgetOptimizeSchema and InsightsSchema', () => {
       const validBudget = {
         suggestedMonthlyBudget: 40000,
-        categoryLimits: [{ category: 'Food', limit: 12000, reason: 'Historical spending' }],
-        savingsTips: ['Eat out less']
+        categoryLimits: [{ category: 'Food', suggestedLimit: 12000, reason: 'Historical spending' }],
+        tips: ['Eat out less']
       };
       expect(BudgetOptimizeSchema.safeParse(validBudget).success).toBe(true);
 
       const validInsights = {
         insights: [
           {
-            type: 'warning',
-            severity: 'medium',
             title: 'High Food Spend',
-            message: 'Food expenses increased by 20%'
+            detail: 'Food expenses increased by 20%',
+            severity: 'warning',
+            category: 'Food'
           }
         ]
       };

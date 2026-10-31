@@ -288,3 +288,4 @@ Before saying "I understand Phase P4", make sure you can answer these out loud:
 3. *Why does MongoDB need a partial unique index on `dedupeHash` instead of a regular unique index?*
 4. *What happens if 2 out of 50 rows in a CSV have invalid dates or missing descriptions?*
 5. *How does active learning update `CategoryMemory` when a user edits a category in the preview table?*
+

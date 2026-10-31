@@ -113,3 +113,22 @@
 
 
 
+
+---
+
+## Story 7: The Canonical Category Trap and Proportional Scaling `[DRAFT - verify]`
+- **Theme**: Data Modeling, Defensive Programming, LLM Post-Repair, Resilience
+- **When to tell this**: *"Tell me about a bug where external data or schemas caused unexpected failures,"* or *"How do you test and harden AI outputs against real-world business constraints?"*
+
+### Spoken Answer (60–90 seconds)
+> **Situation**: *"While building the AI Budget Optimizer in Phase P5, we designed a heuristic fallback engine (`buildHeuristicBudget`) that calculates category spending baselines using a 100/90/95 rule (100% for fixed essentials, 90% for flexible spend)."*
+>
+> **Task**: *"During unit testing, `tests/budgetOptimizer.test.js` suddenly threw `TypeError: Cannot read properties of undefined (reading 'suggestedLimit')`. The housing category was completely missing from the returned array."*
+>
+> **Action**: *"I traced the flow and discovered an enum mismatch: the test fixture and heuristic fixed set used the informal label `'Housing'`, whereas our canonical enum constant in `categories.js` defined the category as `'Rent'`. Because `buildHeuristicBudget` defensive validation strictly checks `EXPENSE_CATEGORIES.includes(category)`, the un-canonical category was dropped silently.
+> 
+> I immediately aligned our fixed categories set to canonical names (`Rent`, `Bills`). Furthermore, I realized that even when LLMs output valid categories, their proposed limits can occasionally sum up to more than the user's monthly budget. 
+> 
+> To permanently guard against this, I implemented proportional scaling in `repairBudgetSuggestions`: if `sum(categoryLimits) > monthlyBudget`, we compute `scale = budget / sum` and multiply each limit by that ratio, rounding to whole rupees."*
+>
+> **Result**: *"The fix hardened our financial constraints. Not only did our unit tests pass, but our AI budget optimizer mathematically guarantees that proposed category limits can never exceed the total monthly budget or the user's verified income."*

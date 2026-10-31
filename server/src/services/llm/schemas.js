@@ -14,30 +14,29 @@ export const CategorizeResultSchema = z.object({
   )
 });
 
-// 2. Budget Optimizer Output Schema (for Phase P5)
+// 2. Budget Optimizer Output Schema (Phase P5)
 export const BudgetOptimizeSchema = z.object({
-  suggestedMonthlyBudget: z.number().nonnegative(),
+  suggestedMonthlyBudget: z.number().min(0),
   categoryLimits: z.array(
     z.object({
       category: z.enum(EXPENSE_CATEGORIES),
-      limit: z.number().nonnegative(),
-      reason: z.string()
+      suggestedLimit: z.number().min(0),
+      reason: z.string().max(200)
     })
   ),
-  savingsTips: z.array(z.string())
+  tips: z.array(z.string().max(200)).max(4)
 });
 
-// 3. Financial Insights Output Schema (for Phase P5)
+// 3. Financial Insights Output Schema (Phase P5)
 export const InsightsSchema = z.object({
   insights: z.array(
     z.object({
-      type: z.enum(['positive', 'warning', 'neutral', 'tip']),
-      severity: z.enum(['low', 'medium', 'high']),
-      title: z.string(),
-      message: z.string(),
-      action: z.string().nullable().optional()
+      title: z.string().max(80),
+      detail: z.string().max(280),
+      severity: z.enum(['info', 'warning', 'critical']),
+      category: z.string().nullable().optional()
     })
-  )
+  ).min(1).max(6)
 });
 
 // Derive JSON Schemas from Zod (Single Source of Truth)

@@ -40,13 +40,17 @@
    - Add a transaction with automatic categorization.
    - Show the live suggestion chip debounce (600ms).
    - Change category to demonstrate the write to `CategoryMemory`.
-3. **CSV Bank Statement Import Pipeline (1.5 minutes)**:
+3. **CSV Bank Statement Import Pipeline (1 minute)**:
    - Drag and drop `sample_statement.csv`.
    - Show step 1 (upload) -> step 2 (preview table): show deduplication badges and PII masking.
    - Commit valid rows.
-4. **Resilience & Fallback Demonstration (1 minute)**:
+4. **AI Budget Optimizer & Insights Demo (1 minute)**:
+   - Click 'Optimize Budget': Show how FinTrack calculates 3-month spending aggregates from MongoDB and suggests a realistic monthly budget with category limits.
+   - Mention the deterministic repair: *"Even if the LLM suggests limits exceeding the budget, our code proportionally scales them down so limits never exceed the monthly target or verified income."*
+   - Show the Financial Insights feed with severity badges (`warning`, `info`, `critical`).
+5. **Resilience & Fallback Demonstration (1 minute)**:
    - *The killer interview moment*: Disconnect your Wi-Fi or set an invalid API key.
-   - Add another transaction: show how the app gracefully falls back to rule-based heuristics with a `rule` badge.
+   - Add another transaction or generate budget: show how the app gracefully falls back to rule-based heuristics with a `heuristic` badge.
    - Conclude: *"The system never breaks for the user because an external AI provider went down."*
 
 ---

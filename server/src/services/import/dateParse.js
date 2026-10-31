@@ -102,3 +102,4 @@ export function parseTransactionDate(dateStr) {
 }
 
 export default parseTransactionDate;
+

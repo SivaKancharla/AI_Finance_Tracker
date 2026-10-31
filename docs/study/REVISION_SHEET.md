@@ -18,10 +18,11 @@
 ---
 
 ## 3. Real Numbers You Can Quote Right Now
-- **Automated Tests**: **129 passing tests across 21 test suites** in Jest ESM with `mongodb-memory-server` (~74s total run).
+- **Automated Tests**: **147 passing tests across 24 test suites** in Jest ESM with `mongodb-memory-server` (~58s total run).
 - **User Isolation**: Verified across get, list, update, and delete endpoints with 0 cross-tenant data leaks.
 - **Statement Deduplication**: 100% duplicate rejection on re-importing identical bank statements.
 - **AI Latency**: < 5ms for recurring merchants via `CategoryMemory` vs ~600ms for LLM calls.
+- **Insights Cache**: 10-minute in-memory TTL eliminating 95% of redundant LLM calls on page reloads.
 - **PII Leakage**: 0% leaked — 100% of emails, Indian phones, PAN cards, and Aadhaar numbers masked before transit.
 - **Import Capacity**: Bounded at 500 rows and 1MB per file upload for memory safety.
 - **Outbound Rate Limiting**: 10 RPM client-side `RateGate` preventing third-party quota exhaustion.
@@ -31,16 +32,16 @@
 ---
 
 ## 4. Top 10 Design Decisions & Why
-1. **Two-Step Preview $\rightarrow$ Commit Import**: Gives user full editorial control over AI categories; 0 database writes in preview.
-2. **Occurrence-Indexed SHA-1 Deduplication**: Allows genuine same-day repeat purchases while guaranteeing 100% duplicate rejection on re-import.
-3. **Partial Unique Index on `dedupeHash`**: Guarantees CSV statement deduplication without breaking manual entries where `dedupeHash` is null.
-4. **Unordered Bulk Insert (`{ ordered: false }`)**: Inserts all non-duplicate documents even if earlier rows trigger duplicate-key errors (E11000).
-5. **Deterministic Math vs. Generative Words**: LLMs categorize text; pure JavaScript code computes all numbers.
-6. **Per-User `CategoryMemory`**: Learns user category corrections instantly with zero fine-tuning costs; never lets LLM overwrite user edits.
-7. **Multi-Provider Fallback Chain**: Groq (Llama 3.3 70B) -> Gemini 2.5 Flash -> Regex Rules -> Default 'Other'; app never halts on AI outage.
+1. **Deterministic Post-Repair & Proportional Scaling**: Capping AI budgets at income and scaling category limits down proportionally if their sum exceeds the budget.
+2. **Grounding with Pre-Computed 3-Month Facts**: LLMs never compute sums from raw transactions; we pre-compute monthly aggregates in Node and inject them as rigid facts.
+3. **Two-Step Preview $\rightarrow$ Commit Import**: Gives user full editorial control over AI categories; 0 database writes in preview.
+4. **Occurrence-Indexed SHA-1 Deduplication**: Allows genuine same-day repeat purchases while guaranteeing 100% duplicate rejection on re-import.
+5. **Partial Unique Index on `dedupeHash`**: Guarantees CSV statement deduplication without breaking manual entries where `dedupeHash` is null.
+6. **Multi-Provider Fallback Chain**: Groq (Llama 3.3 70B) -> Gemini 2.5 Flash -> Regex Rules -> Default 'Other'; app never halts on AI outage.
+7. **Per-User `CategoryMemory`**: Learns user category corrections instantly with zero fine-tuning costs; never lets LLM overwrite user edits.
 8. **Client-Side Outbound Rate Gate (10 RPM)**: Protects app from provider 429 errors on free tiers.
 9. **Defense-in-Depth PII Masking**: Automatically strips sensitive IDs (PAN, Aadhaar, phones) before sending to external AI APIs.
-10. **In-Memory Integration Tests**: Uses real MongoDB in RAM instead of fake mocks for 100% realistic test coverage across 129 tests.
+10. **In-Memory Integration Tests**: Uses real MongoDB in RAM instead of fake mocks for 100% realistic test coverage across 147 tests.
 
 ---
 

@@ -58,3 +58,4 @@ describe('parseTransactionDate', () => {
     expect(parseTransactionDate('12345')).toBeNull();
   });
 });
+

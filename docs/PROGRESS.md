@@ -286,3 +286,77 @@
 
 
 
+
+---
+
+## Phase P5: Budget Optimizer, Financial Insights & Security Hardening
+**Status:** Completed
+
+### Deliverables & Accomplishments
+1. **Zod & JSON Schemas Finalization (`server/src/services/llm/schemas.js`)**:
+   - `BudgetOptimizeSchema`: `suggestedMonthlyBudget`, `categoryLimits` (with `category`, `suggestedLimit`, `reason`), and `tips` (max 4).
+   - `InsightsSchema`: `insights` array (1 to 6 items) with `title` (<= 80 chars), `detail` (<= 280 chars), `severity` (`info`, `warning`, `critical`), and optional `category`.
+   - Single-source-of-truth export generating clean JSON schemas via `zodToJsonSchema`.
+
+2. **Deterministic Budget Repair & Heuristics (`server/src/services/ai/budgetOptimizer.js`)**:
+   - `repairBudgetSuggestions(data, { averageIncome })`:
+     - Clamps negative values to ₹0 and rounds all figures to whole rupees.
+     - Drops duplicate or invalid categories not matching `EXPENSE_CATEGORIES`.
+     - Hard constraint capping: `suggestedMonthlyBudget` cannot exceed verified `averageIncome`.
+     - Proportional scaling: if the sum of category limits exceeds `suggestedMonthlyBudget`, scales category limits down proportionally (`lim * (budget / sumLimits)`).
+     - Enforces array boundaries on actionable tips (max 4).
+   - `buildHeuristicBudget({ averageIncome, averageExpense, categoryAverages })`:
+     - Deterministic 100% / 90% / 95% allocation rules:
+       - Fixed essentials (`Rent`, `Bills`, `Education`, `Healthcare`) = 100% of historical average.
+       - Discretionary flexible spend (`Food`, `Shopping`, `Entertainment`, `Transport`) = 90% of historical average (10% savings trim).
+       - Other categories = 95% of historical average.
+     - Ensures FinTrack can always provide high-quality budget plans even when LLM quotas are exhausted or models are unreachable.
+
+3. **Financial Insights Engine & Cache (`server/src/services/ai/insights.js`)**:
+   - `buildHeuristicInsights(facts)`:
+     - Deterministic rule engine deriving actionable insights from mathematical aggregates:
+       - Budget usage alerts (critical >= 100%, warning >= 80%, info on track).
+       - Per-category overspend alerts for categories exceeding their individual budget.
+       - Category concentration risk if a single category exceeds 25% (info) or 40% (warning) of monthly spend.
+       - Run-rate projection risk using Phase P2 linear forecast.
+       - Savings rate milestone or warning.
+   - Free-tier protection cache (`insightsCache`):
+     - In-memory 10-minute TTL keyed by `userId:monthKey`.
+     - Eliminates duplicate LLM calls on dashboard re-renders and page navigation.
+     - Supports cache invalidation via `force=1` or `{ force: true }`.
+
+4. **AI Controller & Endpoints (`server/src/controllers/ai.controller.js`, `server/src/routes/ai.routes.js`)**:
+   - `POST /api/ai/budget-optimize`:
+     - Scopes transactions to the last 3 complete calendar months in IST.
+     - Computes monthly average income, expense, and category averages.
+     - Returns `reason: 'not_enough_data'` when zero expense history exists.
+     - Returns structured recommendations with provider attribution (`groq`, `gemini`, or `heuristic`).
+   - `POST /api/ai/insights`:
+     - Evaluates target month (defaults to current month in IST).
+     - Assembles multi-month historical facts, forecast run-rate, and budget status.
+     - Delivers grounded, prioritized insights.
+   - Security: Protected by JWT auth, rate limiting (`aiLimiter`), and strict `userId` scoping.
+
+5. **Automated Testing & Full Suite Verification**:
+   - Test count expanded from 129 to **147 passing tests across 24 test suites** (100% green in ~58s).
+   - Added test suites:
+     - `budgetOptimizer.test.js` (6 tests): repair rules, income capping, proportional scaling, heuristic allocation, LLM fallback.
+     - `insights.test.js` (6 tests): heuristic alerts, budget overrun, run-rate risk, 10-minute cache hit/force bypass, LLM fallback.
+     - `aiEndpointsP5.test.js` (5 tests): auth protection, empty history handling, budget optimization, insights generation, heuristic fallback on double LLM outage.
+   - Updated `promptsAndSchemas.test.js` to validate finalized P5 schemas.
+
+---
+
+## Real Problems Encountered & Fixed (Build Log - Continued)
+
+### Problem 10: Canonical Category Mismatch in Heuristic Budgeting (P5)
+- **Symptom**: `buildHeuristicBudget` dropped housing expenses and `tests/budgetOptimizer.test.js` failed with `TypeError: Cannot read properties of undefined (reading 'suggestedLimit')`.
+- **Cause**: Category was hardcoded as `'Housing'` in fixed categories set and test fixtures, whereas the canonical category constant defined in `categories.js` is `'Rent'`.
+- **Fix**: Aligned fixed category sets and test seeds to use canonical category names (`Rent`, `Bills`).
+- **Lesson**: Always cross-reference category enum constants across models, parsers, and AI prompt schemas rather than using informal category labels.
+
+### Problem 11: Schema Drift in promptsAndSchemas.test.js (P5)
+- **Symptom**: `promptsAndSchemas.test.js` failed validating `BudgetOptimizeSchema` and `InsightsSchema` during full suite run.
+- **Cause**: The test was checking draft schemas from Phase P3 (`limit` instead of `suggestedLimit`, `savingsTips` instead of `tips`, `message` instead of `detail`).
+- **Fix**: Updated `promptsAndSchemas.test.js` to validate the finalized Phase P5 schema definitions.
+- **Lesson**: Whenever schemas evolve from placeholder draft to production spec, update unit test schema fixtures in tandem.

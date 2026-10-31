@@ -144,3 +144,27 @@
 
 
 
+
+---
+
+## 8. AI Grounding, Deterministic Repair & Heuristics (Phase P5)
+
+### Grounding vs. Parametric Memory
+- **Plain Meaning**: Grounding restricts an LLM to answer strictly from verified facts supplied directly in prompt context, preventing the model from guessing or relying on out-of-date training data (parametric memory).
+- **Where it appears in FinTrack**: [`server/src/services/ai/budgetOptimizer.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/services/ai/budgetOptimizer.js) injects pre-computed MongoDB aggregates into the prompt and commands the LLM to use only those figures.
+
+### Deterministic Post-Repair
+- **Plain Meaning**: Programmatically intercepting AI outputs with hardcoded mathematical rules to guarantee business constraints and schema invariants before exposing data to the user.
+- **Where it appears in FinTrack**: `repairBudgetSuggestions()` clamps negative numbers, drops unknown categories, caps suggested budgets to income, and scales category limits.
+
+### Proportional Scaling
+- **Plain Meaning**: Scaling multiple related numerical components by a uniform multiplier ($S / \sum X_i$) so their total exactly equals a target constraint ceiling without distorting their relative weight.
+- **Where it appears in FinTrack**: When the sum of proposed category limits exceeds the monthly budget, category limits are scaled down proportionally: `lim * (budget / sumLimits)`.
+
+### Heuristic Fallback
+- **Plain Meaning**: A deterministic, rule-based algorithmic alternative designed to run instantly with zero external dependencies when external services (like LLM APIs) encounter outages or rate limits.
+- **Where it appears in FinTrack**: `buildHeuristicBudget()` applies 100% fixed / 90% flexible allocation rules, guaranteeing that the budget optimizer works 100% of the time.
+
+### In-Memory TTL Caching
+- **Plain Meaning**: Storing computational or external API results in process RAM for a specified Time-To-Live duration to eliminate repetitive, expensive calls.
+- **Where it appears in FinTrack**: `insightsCache` in [`server/src/services/ai/insights.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/services/ai/insights.js) caches monthly insights for 10 minutes per user.

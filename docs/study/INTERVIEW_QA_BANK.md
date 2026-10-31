@@ -205,3 +205,38 @@
 
 
 
+
+---
+
+## 9. Budget Optimizer, Insights & Deterministic Repair (Phase P5)
+
+#### Q26: How do you prevent LLMs from hallucinating numbers in financial advice?
+- **Tags**: `[MUST]` `[All Roles]` `[AI-role]`
+- **15-second answer**: We never ask the LLM to compute or look up numbers; we pre-compute exact figures deterministically in Node.js, pass them inside `<facts>` tags, set temperature to $0.1$, and run output through a deterministic repair function in code.
+- **60-second spoken answer**: *"In FinTrack, financial calculations are never delegated to the LLM. In `ai.controller.js`, MongoDB aggregates the user's last 3 complete months of spending and computes exact averages. These numbers are injected into the prompt as rigid facts. The LLM's only role is qualitative synthesis: writing 1-sentence explanations and practical tips. After generation, our `repairBudgetSuggestions` function validates every single number against hard mathematical rules: clamping negatives to zero, capping the budget at verified income, and proportionally scaling down limits if their sum exceeds the monthly budget."*
+- **Follow-ups**:
+  - *Q: What if the model outputs a negative limit?* -> *A: `Math.max(0, val)` clamps it to zero in `repairBudgetSuggestions`.*
+  - *Q: What if the model invents a new category like 'Crypto'?* -> *A: Any category not in our `EXPENSE_CATEGORIES` enum is filtered out.*
+- **Trap**: Never say "I asked the LLM nicely not to hallucinate in the prompt." Interviewers want to see deterministic code guards.
+
+#### Q27: Why use a 10-minute cache for insights?
+- **Tags**: `[MUST]` `[Basic]` `[Service|Startup]`
+- **15-second answer**: To prevent users from exhausting free-tier LLM rate limits on repeated page reloads and dashboard navigations, while keeping recommendations fresh.
+- **60-second spoken answer**: *"Financial insights for a given month do not change from second to second. In a React SPA, users frequently switch between tabs or reload the dashboard. Calling an LLM on every page hit would immediately burn our 10-requests-per-minute Groq quota. Our 10-minute TTL in-memory cache keyed by `userId:monthKey` eliminates 95% of redundant AI calls. If the user records a batch of new transactions and wants an immediate refresh, they can pass `?force=1` to bypass the cache."*
+- **Trap**: Claiming you need Redis for a single-server demo. Be clear that in-memory is the right minimal engineering choice now, and Redis is the scaling choice.
+
+#### Q28: What is the difference between an LLM and a rule-based engine here?
+- **Tags**: `[MUST]` `[Intermediate]` `[Product|AI-role]`
+- **15-second answer**: The rule engine guarantees mathematical correctness and 100% uptime; the LLM provides nuanced, empathetic, human-like explanations and actionable tips.
+- **60-second spoken answer**: *"Rules are deterministic, zero-latency, and free, but produce generic, repetitive text like 'Food spend increased 20%'. LLMs produce contextual, actionable, and encouraging recommendations tailored to Indian spending habits, such as identifying recurring delivery fee creep. In FinTrack, rules form the foundation and fallback, while the LLM acts as the enhancement layer. If the LLM is down, the system gracefully degrades to heuristics without breaking."*
+- **Trap**: Don't disparage rule-based systems. Great GenAI engineers always pair probabilistic models with deterministic fallbacks.
+
+#### Q29: How do you handle cold-start users with no transaction history?
+- **Tags**: `[SHOULD]` `[Basic]` `[Product|Startup]`
+- **15-second answer**: The controller detects zero historical expense data and returns HTTP 200 with `reason: 'not_enough_data'` and `suggestions: null`.
+- **60-second spoken answer**: *"We specifically check `hasExpenses` across the 3-month analysis window. If a user is brand new or hasn't recorded expenses, invoking an LLM would either hallucinate fake Indian averages or return an empty hallucination. Instead, our endpoint returns `reason: 'not_enough_data'`. The frontend displays an onboarding prompt encouraging them to log transactions or upload a bank statement first."*
+
+#### Q30: How does Proportional Scaling work when category limits exceed total monthly budget?
+- **Tags**: `[Intermediate]` `[Backend]` `[SDE]`
+- **15-second answer**: We compute `scale = suggestedMonthlyBudget / sum(categoryLimits)` and multiply every category limit by `scale`, rounding to whole rupees.
+- **60-second spoken answer**: *"Even with zero temperature, an LLM might propose category limits totaling ₹45,000 for a ₹40,000 budget. In `repairBudgetSuggestions`, we calculate the total sum of all valid category limits. If this sum exceeds the proposed monthly budget, we calculate a proportional scaling factor ($40000 / 45000 = 0.8889$) and scale down each individual category limit by this ratio. This preserves the relative spending priority between categories while guaranteeing that the total category limits never exceed the monthly budget."*
