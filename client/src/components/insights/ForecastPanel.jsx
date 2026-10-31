@@ -11,16 +11,18 @@ export function ForecastPanel({ forecastData }) {
     );
   }
 
-  const {
-    projectedTotal = 0,
-    historicalAverage = 0,
-    confidence = 0.5,
-    budgetRisk = false,
-    method = 'blended',
-    explanation
-  } = forecastData;
-
-  const confidencePct = Math.round(confidence * 100);
+  const projectedTotal =
+    forecastData.predictedExpense ??
+    forecastData.projectedTotal ??
+    forecastData.currentMonth?.projectedMonthEnd ??
+    0;
+  const historicalAverage = forecastData.historicalAverage ?? 0;
+  const rawConfidence = forecastData.confidence ?? 0.5;
+  const confidencePct =
+    rawConfidence > 1 ? Math.min(100, Math.round(rawConfidence)) : Math.round(rawConfidence * 100);
+  const budgetRisk = Boolean(forecastData.budgetRisk);
+  const method = forecastData.method ?? 'blended';
+  const explanation = forecastData.explanation;
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 space-y-5">

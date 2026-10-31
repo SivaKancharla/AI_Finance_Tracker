@@ -54,7 +54,9 @@ export function Dashboard() {
   const trend = data?.trend || [];
   const forecast = data?.forecast || null;
   const recentTransactions = data?.recentTransactions || [];
-  const hasTransactions = summary.transactionCount > 0;
+  const hasTransactions =
+    (summary.transactionCount ??
+      (summary.totalExpense > 0 || summary.totalIncome > 0 ? 1 : 0)) > 0;
 
   return (
     <div className="space-y-6">
@@ -113,9 +115,19 @@ export function Dashboard() {
             <div>
               <p className="text-xs font-semibold text-slate-600">Run-Rate Spending Projection</p>
               <p className="text-base font-extrabold text-slate-900">
-                Projected this month: {formatCurrency(forecast.projectedTotal)}{' '}
+                Projected this month:{' '}
+                {formatCurrency(
+                  forecast.predictedExpense ??
+                    forecast.projectedTotal ??
+                    forecast.currentMonth?.projectedMonthEnd ??
+                    0
+                )}{' '}
                 <span className="text-xs font-medium text-slate-500">
-                  ({Math.round(forecast.confidence * 100)}% model confidence)
+                  (
+                  {forecast.confidence > 1
+                    ? Math.min(100, Math.round(forecast.confidence))
+                    : Math.round(forecast.confidence * 100)}
+                  % model confidence)
                 </span>
               </p>
             </div>
@@ -164,8 +176,10 @@ export function Dashboard() {
             title="Net Savings"
             amount={summary.savings || 0}
             subtitle={
-              summary.savingsRate !== null
+              summary.savingsRate != null
                 ? `${summary.savingsRate}% savings rate`
+                : summary.totalIncome > 0
+                ? `${Math.round(((summary.savings || 0) / summary.totalIncome) * 100)}% savings rate`
                 : 'Based on logged cash flow'
             }
             icon={PiggyBank}
@@ -200,26 +214,26 @@ export function Dashboard() {
           monthlyBudget={summary.monthlyBudget}
           totalExpense={summary.totalExpense}
           budgetRemaining={summary.budgetRemaining}
-          budgetUsagePercent={summary.budgetUsagePercent}
+          budgetUsagePercent={summary.budgetUsagePercent ?? summary.budgetUsedPercent ?? 0}
         />
       )}
 
       {/* Visual Charts Grid */}
       {loading ? (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 min-w-0">
             <SkeletonChart />
           </div>
-          <div>
+          <div className="min-w-0">
             <SkeletonChart />
           </div>
         </div>
       ) : hasTransactions ? (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 min-w-0">
             <TrendChart trend={trend} />
           </div>
-          <div>
+          <div className="min-w-0">
             <CategoryPie categories={summary.categoryBreakdown || []} />
           </div>
         </div>
@@ -250,11 +264,15 @@ export function Dashboard() {
       {/* Grouped Income vs Expense Bar & Recent Transactions */}
       {!loading && hasTransactions && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <IncomeExpenseBar trend={trend} />
-          <RecentTransactions
-            transactions={recentTransactions}
-            onReviewTransaction={() => navigate('/transactions')}
-          />
+          <div className="min-w-0">
+            <IncomeExpenseBar trend={trend} />
+          </div>
+          <div className="min-w-0">
+            <RecentTransactions
+              transactions={recentTransactions}
+              onReviewTransaction={() => navigate('/transactions')}
+            />
+          </div>
         </div>
       )}
     </div>

@@ -21,6 +21,8 @@ export function CategoryBudgetRow({
         {/* Category Selector */}
         <div className="w-full sm:w-1/3">
           <select
+            id={`category-select-${index}`}
+            name={`category-select-${index}`}
             value={item.category}
             onChange={(e) => onChange(index, 'category', e.target.value)}
             className="w-full rounded-lg border border-slate-300 py-1.5 pl-3 pr-8 text-sm font-semibold text-slate-800 bg-white focus:ring-1 focus:ring-indigo-500"
@@ -35,8 +37,10 @@ export function CategoryBudgetRow({
 
         {/* Limit Input */}
         <div className="flex items-center gap-2 w-full sm:w-1/3">
-          <span className="text-xs text-slate-500 font-medium">Limit: ₹</span>
+          <label htmlFor={`limit-input-${index}`} className="text-xs text-slate-500 font-medium whitespace-nowrap">Limit: ₹</label>
           <input
+            id={`limit-input-${index}`}
+            name={`limit-input-${index}`}
             type="number"
             min="0"
             step="100"

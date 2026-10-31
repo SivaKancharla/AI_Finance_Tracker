@@ -67,13 +67,18 @@ export function summarizeMonth(transactions = [], budget = null) {
     };
   });
 
+  const savingsRate = totalIncome > 0 ? round2((savings / totalIncome) * 100) : null;
+
   return {
     totalIncome,
     totalExpense,
     savings,
+    savingsRate,
+    transactionCount: transactions.length,
     monthlyBudget,
     budgetRemaining,
     budgetUsedPercent,
+    budgetUsagePercent: budgetUsedPercent,
     categoryBreakdown,
     categoryBudgetStatus
   };

@@ -91,6 +91,7 @@ export function Login() {
               placeholder="you@example.com"
               icon={Mail}
               required
+              autoComplete="email"
               error={errors.email}
             />
 
@@ -103,6 +104,7 @@ export function Login() {
               placeholder="••••••••"
               icon={Lock}
               required
+              autoComplete="current-password"
               error={errors.password}
             />
 

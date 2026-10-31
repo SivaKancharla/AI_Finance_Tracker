@@ -84,6 +84,7 @@ export function Signup() {
               placeholder="Siva Kumar"
               icon={User}
               required
+              autoComplete="name"
               error={errors.name}
             />
 
@@ -96,6 +97,7 @@ export function Signup() {
               placeholder="siva@example.com"
               icon={Mail}
               required
+              autoComplete="email"
               error={errors.email}
             />
 
@@ -108,6 +110,7 @@ export function Signup() {
               placeholder="••••••••"
               icon={Lock}
               required
+              autoComplete="new-password"
               error={errors.password}
             />
 
@@ -120,6 +123,7 @@ export function Signup() {
               placeholder="••••••••"
               icon={Lock}
               required
+              autoComplete="new-password"
               error={errors.confirmPassword}
             />
 

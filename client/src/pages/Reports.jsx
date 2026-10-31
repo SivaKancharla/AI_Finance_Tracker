@@ -161,7 +161,7 @@ export function Reports() {
           </div>
 
           <div className="h-64 w-full">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0}>
               <BarChart
                 data={categoryBreakdown}
                 layout="vertical"

@@ -22,7 +22,10 @@ const PALETTE = [
 ];
 
 export function CategoryPie({ categories = [] }) {
-  if (!categories || categories.length === 0) {
+  // Only display categories with non-zero spending
+  const activeCategories = categories.filter((c) => Number(c.amount) > 0);
+
+  if (!categories || categories.length === 0 || activeCategories.length === 0) {
     return (
       <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 flex flex-col items-center justify-center h-80 text-center">
         <p className="text-sm text-slate-400">No category breakdown for this month</p>
@@ -33,11 +36,12 @@ export function CategoryPie({ categories = [] }) {
   const CustomTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
+      const pct = data.percent ?? data.percentage ?? 0;
       return (
         <div className="bg-slate-900 text-white px-3.5 py-2.5 rounded-xl shadow-xl text-xs space-y-1">
           <p className="font-semibold text-slate-200">{data.category}</p>
           <p className="text-sm font-bold text-indigo-400">{formatCurrency(data.amount)}</p>
-          <p className="text-slate-400">{data.percentage}% of total expenses</p>
+          <p className="text-slate-400">{pct}% of total expenses</p>
         </div>
       );
     }
@@ -52,10 +56,10 @@ export function CategoryPie({ categories = [] }) {
       </div>
 
       <div className="h-56 w-full relative">
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height="100%" minWidth={0}>
           <PieChart>
             <Pie
-              data={categories}
+              data={activeCategories}
               dataKey="amount"
               nameKey="category"
               cx="50%"
@@ -64,7 +68,7 @@ export function CategoryPie({ categories = [] }) {
               outerRadius={85}
               paddingAngle={2}
             >
-              {categories.map((entry, index) => (
+              {activeCategories.map((entry, index) => (
                 <Cell
                   key={`cell-${entry.category}-${index}`}
                   fill={PALETTE[index % PALETTE.length]}
@@ -78,14 +82,16 @@ export function CategoryPie({ categories = [] }) {
 
       {/* Legend Grid */}
       <div className="mt-4 grid grid-cols-2 gap-2 text-xs max-h-32 overflow-y-auto pr-1">
-        {categories.slice(0, 6).map((cat, idx) => (
+        {activeCategories.slice(0, 6).map((cat, idx) => (
           <div key={cat.category} className="flex items-center gap-2">
             <span
               className="h-2.5 w-2.5 rounded-full flex-shrink-0"
               style={{ backgroundColor: PALETTE[idx % PALETTE.length] }}
             />
             <span className="text-slate-600 truncate">{cat.category}</span>
-            <span className="font-semibold text-slate-900 ml-auto">{cat.percentage}%</span>
+            <span className="font-semibold text-slate-900 ml-auto">
+              {cat.percent ?? cat.percentage ?? 0}%
+            </span>
           </div>
         ))}
       </div>

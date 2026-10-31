@@ -117,6 +117,7 @@ export function forecast({
     historicalAverage,
     monthsOfData,
     predictedExpense,
+    projectedTotal: predictedExpense,
     confidence,
     budgetRisk,
     method: 'run_rate_blend'
