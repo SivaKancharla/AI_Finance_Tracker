@@ -70,4 +70,24 @@
 >
 > **Result**: *"Our forecasting and analytics engine delivers instantaneous calculations with zero API costs, zero quota limits, and mathematical accuracy. We reserve LLM calls strictly for semantic categorization and conversational insights."*
 
+---
+
+## Story 5: The Module Evaluation Mocking Trap in ES Modules `[DRAFT - verify]`
+- **Theme**: JavaScript Runtimes, ES Modules, Mock Testing, Debugging
+- **When to tell this**: *"Tell me about a tricky JavaScript / Node.js bug you encountered,"* or *"How do you test external APIs without making real network requests?"*
+
+### Spoken Answer (60–90 seconds)
+> **Situation**: *"While writing unit tests for our multi-provider LLM service layer in Phase P3, we mocked our Groq provider using `jest.spyOn(groqProvider, 'call').mockResolvedValue(...)` so the tests wouldn't make real network calls."*
+>
+> **Task**: *"When running `npm test`, the test unexpectedly made a real network call to Groq's servers and threw `Groq HTTP 404: model not found`. The Jest spy appeared to be completely ignored."*
+>
+> **Action**: *"I inspected `server/src/services/llm/index.js` to see how the provider was invoked. I found an object mapping: `PROVIDERS = { groq: { call: groqProvider.call } }`.
+> 
+> Because this object was initialized at top-level module evaluation time, `PROVIDERS.groq.call` held the original function reference before Jest could attach its spy in the test file!
+> 
+> To resolve this, I wrapped the call in an arrow function: `call: (...args) => groqProvider.call(...args)`. This deferred lookup to call-time, allowing the Jest spy on `groqProvider.call` to intercept the invocation properly."*
+>
+> **Result**: *"The test suite immediately passed with 100% mocked isolation, zero network calls to Groq or Gemini, and rock-solid resilience testing for schema repair loops."*
+
+
 

@@ -1,25 +1,26 @@
 # 00 — Project Overview (Cumulative)
-*Last updated: Phase P2 (Analytics, Spending Trend, Forecast & PDF Export)*
+*Last updated: Phase P3 (LLM Service Layer, Resilience & Categorization Pipeline)*
 
 ---
 
 ## 1. Spoken Elevator Pitches
 
 ### 30-Second Pitch (Spoken, First Person)
-> "I built **FinTrack**, an AI-powered personal finance tracker designed specifically for Indian consumers. Instead of manually typing expense categories, the system automatically classifies transactions using a robust fallback chain: first checking per-user learned merchant memory, then calling Gemini with strict JSON schema constraints, and falling back to rule-based heuristics if the LLM is down. All numbers and budget forecasts are computed deterministically in code so the AI never hallucinates math. It's built with Node, Express, MongoDB, React, and Tailwind, with all user data strictly isolated."
+> "I built **FinTrack**, an AI-powered personal finance tracker designed specifically for Indian consumers. Instead of manually typing expense categories, the system automatically classifies transactions using a resilient 4-tier pipeline: checking per-user learned merchant memory first, then invoking Groq (Llama 3.3 70B) or Google Gemini with strict JSON schema constraints and automatic repair loops, and finally falling back to deterministic regex rules if APIs fail. All numbers and budget forecasts are computed deterministically in code so the AI never hallucinates math, and all PII is sanitized before reaching any LLM."
 
 ### 2-Minute Pitch (Spoken, First Person)
-> "Most personal finance apps fail in one of two ways: either they require tedious manual data entry so users abandon them in a week, or when they integrate AI, they rely on fragile LLM prompts that hallucinate math, break on bad JSON, or fail completely when API quotas expire.
+> "Most personal finance apps fail in one of two ways: either they require tedious manual data entry so users abandon them in a week, or when they integrate AI, they rely on fragile LLM prompts that hallucinate math, break on malformed JSON, leak personal data, or crash completely when API quotas expire.
 >
-> I built **FinTrack** to solve both issues reliably. It's a full-stack MERN application with three core architectural pillars:
+> I built **FinTrack** to solve all these issues reliably. It's a full-stack MERN application built on three architectural pillars:
 > 
-> First, **Reliable AI Categorization**: I designed an multi-tier pipeline. When a transaction comes in, we first check a per-user `CategoryMemory` collection for merchants the user previously confirmed. If it's a new merchant, we query Google Gemini with structured JSON output enforced at both provider and Zod validation levels. If Gemini fails or hits rate limits, it fails over to Groq, then to deterministic keyword rules, and finally defaults to 'Other' with a `needsReview` flag. The system never crashes because an LLM failed.
+> First, **Resilient AI Categorization with Defense in Depth**: When a transaction enters the system, all sensitive identifiers like phone numbers, PAN cards, and Aadhaar numbers are stripped using a local PII masking engine. The transaction then flows through a multi-tier fallback chain:
+> 1. Per-user `CategoryMemory` in MongoDB resolves recurring merchants in 2ms without API calls.
+> 2. For new merchants, Groq (Llama 3.3 70B) or Gemini 2.5 Flash categorizes the item under strict JSON Schema enforcement with Zod runtime validation and an automated single-attempt repair loop.
+> 3. If LLM quotas are exceeded or internet drops, it degrades smoothly to local regex rules, and finally to a default 'Other' category marked for review. The app never crashes because an AI API failed.
 >
-> Second, **Deterministic Math vs. Generative Words**: A core design principle I enforced is that LLMs never calculate financial totals or forecasts. Totals, calendar-month budget margins, and run-rate forecasts are computed in pure TypeScript/JavaScript functions. The LLM only assists with categorization and phrasing natural-language insights.
+> Second, **Deterministic Math vs. Generative Words**: A core design principle is that LLMs never calculate financial totals or forecasts. Totals, calendar-month budget margins, and run-rate forecasts are computed in pure TypeScript/JavaScript functions. The LLM only assists with categorization and phrasing natural-language insights.
 >
-> Third, **Production-Grade Backend Engineering**: The backend uses JWT authentication with bcryptjs, multi-field compound indexes for high-frequency queries, partial unique indexes for statement deduplication, strict Zod request validation, and comprehensive automated test suites using in-memory MongoDB that mathematically prove user data isolation.
->
-> Currently, the core architecture, auth, transaction CRUD, budget management, and user isolation are fully implemented and verified with 48 automated tests."
+> Third, **Production-Grade Observability & Security**: Every AI call records latency, token size, and error types in `AiCallLog` without ever saving raw prompt text, enabling real-time p95 monitoring. The backend enforces JWT authentication, compound indexes, draft-7 rate limiting, and 100% test isolation across 104 automated tests."
 
 ---
 
@@ -112,13 +113,15 @@ When an interviewer asks you to draw your system on a whiteboard, draw these 5 b
 
 | # | Resume Claim | Proven By | Where in Code |
 |---|---|---|---|
+| **C1** | Resilient Multi-Provider LLM Categorization with Fallback Chain | Multi-tier pipeline: Memory -> Groq (Llama 3.3 70B) / Gemini 2.5 Flash -> Rules -> Default; client-side RateGate queue; JSON Schema & Zod repair loop | [`server/src/services/llm/index.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/services/llm/index.js), [`server/src/services/categorization/pipeline.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/services/categorization/pipeline.js) |
+| **C2** | PII Sanitization & AI Observability Monitoring | Local regex masking for PAN, Aadhaar, phones, emails before API call; `AiCallLog` tracking latency, error rates, p95 without saving user text | [`server/src/services/categorization/piiMask.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/services/categorization/piiMask.js), [`server/src/models/AiCallLog.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/models/AiCallLog.js), [`GET /api/ai/stats`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/controllers/ai.controller.js) |
 | **C4** | Secure REST APIs with Node, Express, MongoDB & JWT | Automated isolation tests, generic 401s, bcryptjs salting, draft-7 rate limits, Zod validation | [`server/src/middleware/auth.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/middleware/auth.js), [`server/tests/isolation.test.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/tests/isolation.test.js) |
 | **C5** | Month-Scoped Dashboard Summary & 6-Month Spending Trend | Pure aggregation functions in `summary.js`, 6-month window query in `dashboard.controller.js` | [`server/src/services/analytics/summary.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/services/analytics/summary.js), [`server/src/controllers/dashboard.controller.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/controllers/dashboard.controller.js) |
 | **C7** | Deterministic Run-Rate Spending Forecast & PDF Reports | Statistical run-rate blending with historical averages and volatility penalty; streaming PDFKit generation | [`server/src/services/analytics/forecast.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/services/analytics/forecast.js), [`server/src/controllers/report.controller.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/controllers/report.controller.js) |
-| **P1** | Per-User Merchant Learning Memory | Updating a transaction category immediately writes a high-confidence memory entry that overrides future rules | [`server/src/models/CategoryMemory.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/models/CategoryMemory.js), [`transaction.controller.js:updateTransaction`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/controllers/transaction.controller.js) |
+| **P1** | Per-User Merchant Learning Memory | Updating a transaction category immediately writes a high-confidence memory entry that overrides future rules; user overrides are protected | [`server/src/models/CategoryMemory.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/models/CategoryMemory.js), [`transaction.controller.js:updateTransaction`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/controllers/transaction.controller.js) |
 | **P1** | Robust Multi-key Indexing & NoSQL Schema Design | Compound indexing on `{ userId, transactionDate }` and partial unique index on `{ userId, dedupeHash }` | [`server/src/models/Transaction.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/models/Transaction.js) |
 
-*Note: Claims regarding CSV Import (C6), Frontend Recharts UI (C5), Full LLM Pipeline (C1, C2), and Eval Accuracy (C1) will be unlocked in Phases P3 through P7.*
+*Note: Claims regarding CSV Import (C6), Frontend Recharts UI (C5), and Offline Eval Accuracy Set (C1) will be unlocked in Phases P4 through P7.*
 
 ---
 
@@ -132,7 +135,7 @@ When an interviewer asks you to draw your system on a whiteboard, draw these 5 b
 ### 3 Common Follow-up Questions & How to Answer
 
 1. **"If the AI wrote the code, how do you know it works correctly?"**
-   - *Answer*: *"Because I don't trust raw code without automated proof. I used `mongodb-memory-server` and Supertest to write 48 integration tests covering negative paths: duplicate emails, wrong passwords, regex injection in search queries, and cross-user data tampering. If the tests pass and edge cases are verified, the implementation is solid."*
+   - *Answer*: *"Because I don't trust raw code without automated proof. I used `mongodb-memory-server` and Supertest to write 104 integration and unit tests covering negative paths: duplicate emails, wrong passwords, regex injection in search queries, cross-user data tampering, PII masking, LLM schema repairs, and provider fallback chains. If the tests pass and edge cases are verified, the implementation is solid."*
 2. **"What was one architectural decision the AI tried to make that you corrected?"**
    - *Answer*: *"Initially, standard tutorials calculate budget limits against all-time spending, which is a major logic bug for a monthly tracker. I enforced calendar-month scoping in IST timezone so budget math always resets cleanly on the 1st of each month. I also pinned Tailwind to v3.4 to avoid breaking build configurations."*
 3. **"Can you make a change to the codebase right now?"**
@@ -142,6 +145,6 @@ When an interviewer asks you to draw your system on a whiteboard, draw these 5 b
 
 ## 8. Honest Limitations & What I Would Build Next
 
-1. **Current Limitation**: Transactions currently auto-categorize using keyword rules and memory while waiting for the LLM multi-provider integration in Phase P3.
-2. **Next Milestone**: Phase P2 will implement calendar-month analytics, statistical run-rate spending forecasting, and PDF export with PDFKit.
+1. **Current Limitation**: Bulk import of transactions from bank CSV files is currently pending implementation in Phase P4.
+2. **Next Milestone**: Phase P4 will implement streaming CSV upload, bank statement format autodetection (HDFC, ICICI, SBI), SHA-256 deduplication, and bulk categorization pipeline processing.
 

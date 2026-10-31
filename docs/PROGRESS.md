@@ -152,6 +152,73 @@
 - **Fix**: Configured `launchTimeout: 60000` in `MongoMemoryServer.create()` and set `mongoServer = null` on stop in `server/tests/setup.js`.
 - **Lesson**: Windows process port releasing has higher latency than Linux; configure generous process launch timeouts for local test databases.
 
+---
+
+## Phase P3: LLM Service Layer, Resilience & Categorization Pipeline
+**Status:** Completed
+
+### Deliverables & Accomplishments
+1. **PII Masking & Sanitization (`server/src/services/categorization/piiMask.js`)**:
+   - Built a local regex sanitization engine stripping emails, Indian 10-digit phones (with optional +91 or 0 prefix), PAN card numbers (5-letter 4-digit 1-letter format), 12-digit Aadhaar patterns, and bank account / card runs of 9+ digits before any string reaches third-party LLMs or log files.
+   - Preserves benign merchant titles and numbers under 9 digits.
+
+2. **Structured LLM Schemas & Prompts (`server/src/services/llm/`)**:
+   - `schemas.js`: Zod schemas (`CategorizeResultSchema`) automatically converted to JSON Schema (`CategorizeJsonSchema`) via `zod-to-json-schema`.
+   - `prompts.js`: `PROMPT_VERSION = 'v1'`, anti-injection system prompt, and prompt builder isolating untrusted user input inside `<transactions>` XML tags.
+
+3. **Multi-Provider Fallback & Resilience Chain (`server/src/services/llm/index.js`)**:
+   - Implemented `generateStructured` supporting primary (Groq / Gemini) and secondary fallbacks.
+   - Client-side `RateGate` (10 RPM queue) in `rateGate.js` preventing outbound quota exhaustion.
+   - Exponential backoff with randomized jitter on HTTP 429 and 5xx errors (`Math.pow(2, attempt) * 500 + jitter`).
+   - Automated single-attempt self-repair feedback loop (`attemptRepair`) when LLM outputs invalid JSON or schema violations.
+   - Defensive stripping of markdown backtick code blocks.
+   - Structured logging to `AiCallLog` recording task, provider, model, latency, char counts, and error types without ever persisting raw user prompts.
+
+4. **Categorization Pipeline (`server/src/services/categorization/pipeline.js`)**:
+   - 4-Tier fallback pipeline:
+     1. `CategoryMemory`: Local MongoDB lookup (2ms) for recurring merchants with active hit counting.
+     2. `generateStructured`: Batched LLM inference (up to 10 items per chunk) with Groq (Llama 3.3 70B) or Gemini 2.5 Flash.
+     3. Active Learning: High-confidence LLM results ($\ge 0.70$) saved to `CategoryMemory` while strictly preserving `source: 'user'` records from automated override.
+     4. Deterministic Rules: Keyword dictionary fallback (`ruleCategorizer.js`) when LLM is unavailable.
+     5. Default fallback: Assigns `'Other'` with `needsReview: true`.
+
+5. **AI API Endpoints & Observability (`server/src/controllers/ai.controller.js`, `server/src/routes/ai.routes.js`)**:
+   - `POST /api/ai/categorize`: Live single-transaction categorization for add/edit form suggestions, protected by JWT auth and `aiLimiter`.
+   - `GET /api/ai/stats`: 30-day AI observability metrics computing total calls, success rate, fallback rate, per-provider call volume, average latency, p95 latency (`calculatePercentile`), categorization source breakdown, and total memory entries.
+   - `POST /api/ai/predict`: Spending forecast endpoint.
+
+6. **Testing & Verification**:
+   - Test count expanded from 71 to **104 passing tests across 17 test suites** (100% green in ~74s).
+   - Test suites verify:
+     - `piiMask.test.js`: All Indian PII masks, phone formats, benign text preservation.
+     - `promptsAndSchemas.test.js`: Schema validation, prompt structure, XML tag isolation.
+     - `percentile.test.js`: Exact p95 calculations, empty arrays, edge clamping.
+     - `llmLayer.test.js`: Mocked provider calls, schema repairs, provider fallback, rate gate queue, logging to `AiCallLog`.
+     - `categorizationPipeline.test.js`: Full 4-tier chain, memory resolution, LLM learning, user source preservation, rule fallback, default fallback.
+     - `aiEndpoints.test.js`: Auth protection, 400 validation, live categorization, AI stats aggregation.
+
+---
+
+## Real Problems Encountered & Fixed (Build Log - Continued)
+
+### Problem 5: Module Evaluation Mocking Trap in ES Modules (P3)
+- **Symptom**: Running `tests/llmLayer.test.js` unexpectedly made a live network call to Groq's servers and threw `Groq HTTP 404: model not found`, ignoring `jest.spyOn(groqProvider, 'call')`.
+- **Cause**: In `server/src/services/llm/index.js`, `PROVIDERS.groq.call` bound `groqProvider.call` at top-level module evaluation time. When Jest spied on `groqProvider.call`, the bound reference in `PROVIDERS` was unchanged.
+- **Fix**: Wrapped provider call dispatchers in arrow functions: `call: (...args) => groqProvider.call(...args)`.
+- **Lesson**: In ES modules, defer object property function resolution to call-time using closures/arrow functions so test spies can intercept them.
+
+### Problem 6: PII Regex Swallowing Preceding Whitespace (P3)
+- **Symptom**: Phone number masking in `piiMask.js` converted `"Call me at 9876543210"` into `"Call me at[PHONE]"` (missing space).
+- **Cause**: The optional country-code separator `[ -]?` matched the space preceding the 10-digit number.
+- **Fix**: Changed the regex to `(?:\+91[\s-]?|\b0[\s-]?|\b91[\s-]?)?[6-9]\d{9}\b`, requiring whitespace to be preceded by a recognized dialing prefix.
+- **Lesson**: Optional prefixes with trailing whitespace matchers must be grouped together to prevent matching benign boundary whitespace.
+
+### Problem 7: Asynchronous CategoryMemory Learning in Test Race (P3)
+- **Symptom**: Assertions checking `CategoryMemory` immediately following `categorizeTransactions` received `null`.
+- **Cause**: The memory update was executed fire-and-forget without `await`.
+- **Fix**: Made memory persistence properly `await`ed and added an explicit check for `source !== 'user'` to avoid duplicate key errors on `{ userId: 1, key: 1 }`.
+- **Lesson**: Even background learning logic should be awaitable or sequentially coordinated in test environments.
+
 
 
 

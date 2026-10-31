@@ -89,4 +89,37 @@
 - **Plain Meaning**: A Node.js streaming interface that sends data in sequential binary chunks to the client socket as it is generated, avoiding storing large files in server RAM or on disk.
 - **Where it appears in FinTrack**: [`server/src/controllers/report.controller.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/controllers/report.controller.js) pipes the `PDFDocument` directly into `res`.
 
+---
+
+## 6. AI, LLM Resilience & Data Privacy (Phase P3)
+
+### Structured Output & JSON Schema
+- **Plain Meaning**: Forcing an LLM to generate responses strictly adhering to a JSON Schema specification (properties, types, required keys, enum values) rather than natural language markdown.
+- **Where it appears in FinTrack**: [`server/src/services/llm/schemas.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/services/llm/schemas.js) converts Zod schemas into JSON Schemas sent in Groq and Gemini API payloads.
+
+### Temperature Parameter
+- **Plain Meaning**: A hyperparameter in generative models controlling randomness. Low temperature ($0.0 - 0.2$) forces greedy token selection for deterministic, reproducible answers; higher values ($0.7 - 1.0$) encourage creative variation.
+- **Where it appears in FinTrack**: Configured as `0.1` in [`server/src/services/llm/index.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/services/llm/index.js) so categorization produces identical results across runs.
+
+### LLM Self-Repair Feedback Loop
+- **Plain Meaning**: An automated retry mechanism that feeds validation error messages (like missing JSON fields or bad syntax) back into the prompt, asking the model to fix its mistake.
+- **Where it appears in FinTrack**: `attemptRepair()` in [`server/src/services/llm/index.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/services/llm/index.js) passes Zod issue paths back to the provider once before failing over.
+
+### Exponential Backoff with Jitter
+- **Plain Meaning**: An error-recovery algorithm that progressively doubles the wait duration before retrying ($500\text{ms}, 1000\text{ms}, 2000\text{ms}$) while adding random noise (jitter) to prevent synchronized retries ("thundering herd").
+- **Where it appears in FinTrack**: [`server/src/services/llm/index.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/services/llm/index.js) calculates `Math.pow(2, attempt) * 500 + Math.random() * 200` on 429 and 5xx errors.
+
+### Client-Side Rate Gating (Outbound Throttling)
+- **Plain Meaning**: Throttling outbound client requests before they hit an external third-party API to guarantee compliance with the third-party's tier quotas (e.g. 10 requests per minute).
+- **Where it appears in FinTrack**: `RateGate` class in [`server/src/services/llm/rateGate.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/services/llm/rateGate.js).
+
+### PII Sanitization
+- **Plain Meaning**: Programmatically identifying and masking Personally Identifiable Information (PAN, phone, email, Aadhaar) before data is transmitted over the wire or logged to disk.
+- **Where it appears in FinTrack**: [`server/src/services/categorization/piiMask.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/services/categorization/piiMask.js) strips all sensitive regex patterns from transaction strings.
+
+### Prompt Injection & XML Tag Boundary Defense
+- **Plain Meaning**: An attack where untrusted user input tricks the LLM into executing malicious instructions. Defended against by encapsulating user input inside XML tags and strictly commanding the model to treat tag contents as literal string data.
+- **Where it appears in FinTrack**: [`server/src/services/llm/prompts.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/services/llm/prompts.js) wraps transaction titles in `<transactions><transaction><title>` tags.
+
+
 

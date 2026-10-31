@@ -253,3 +253,4 @@ doc.end();
 ## 13. Skip List (Do NOT Waste Time On These)
 - Deep internal PostScript rendering primitives in PDFKit (`[SKIP]`: Know that it streams binary PDF data).
 - Exotic timezone daylight savings transitions (`[SKIP]`: IST does not observe Daylight Saving Time).
+
