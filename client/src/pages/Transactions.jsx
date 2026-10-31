@@ -17,6 +17,7 @@ import ConfirmDialog from '../components/common/ConfirmDialog.jsx';
 import Pagination from '../components/common/Pagination.jsx';
 import EmptyState from '../components/common/EmptyState.jsx';
 import Button from '../components/common/Button.jsx';
+import ErrorBanner from '../components/common/ErrorBanner.jsx';
 import { Plus, FileSpreadsheet, Receipt } from 'lucide-react';
 import useDebounce from '../hooks/useDebounce.js';
 
@@ -24,7 +25,7 @@ export function Transactions() {
   const dispatch = useDispatch();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const { items, pagination, filters, loading } = useSelector((state) => state.transactions);
+  const { items, pagination, filters, loading, error } = useSelector((state) => state.transactions);
 
   // Modal States
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -194,6 +195,8 @@ export function Transactions() {
         onFilterChange={handleFilterChange}
         onReset={handleResetFilters}
       />
+
+      <ErrorBanner message={error} onRetry={() => dispatch(fetchTransactions())} />
 
       {/* Transactions List or Empty State */}
       {items.length > 0 ? (

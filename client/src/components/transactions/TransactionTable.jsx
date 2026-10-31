@@ -64,7 +64,7 @@ export function TransactionTable({
                       category={t.category}
                       categorySource={t.categorySource}
                       needsReview={t.needsReview}
-                      confidence={t.confidence}
+                      confidence={t.categoryConfidence ?? t.confidence}
                       onReview={() => onReview && onReview(t)}
                     />
                   </td>

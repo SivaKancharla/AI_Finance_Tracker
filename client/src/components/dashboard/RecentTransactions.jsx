@@ -53,7 +53,7 @@ export function RecentTransactions({ transactions = [], onReviewTransaction }) {
                     category={t.category}
                     categorySource={t.categorySource}
                     needsReview={t.needsReview}
-                    confidence={t.confidence}
+                    confidence={t.categoryConfidence ?? t.confidence}
                     onReview={() => onReviewTransaction && onReviewTransaction(t)}
                   />
                 </div>

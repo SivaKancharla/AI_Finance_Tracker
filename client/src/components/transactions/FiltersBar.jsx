@@ -66,14 +66,14 @@ export function FiltersBar({ filters, onFilterChange, onReset }) {
         <div>
           <select
             name="sort"
-            value={filters.sort || '-transactionDate'}
+            value={filters.sort || 'latest'}
             onChange={handleChange}
             className="block w-full rounded-xl border border-slate-300 py-2 pl-3 pr-8 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
           >
-            <option value="-transactionDate">Newest First</option>
-            <option value="transactionDate">Oldest First</option>
-            <option value="-amount">Amount: High to Low</option>
-            <option value="amount">Amount: Low to High</option>
+            <option value="latest">Newest First</option>
+            <option value="oldest">Oldest First</option>
+            <option value="amount_desc">Amount: High to Low</option>
+            <option value="amount_asc">Amount: Low to High</option>
           </select>
         </div>
 

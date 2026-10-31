@@ -56,7 +56,7 @@ const initialFilters = {
   category: '',
   startDate: '',
   endDate: '',
-  sort: '-transactionDate',
+  sort: 'latest',
   page: 1,
   limit: 10
 };
@@ -105,9 +105,18 @@ const transactionSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      .addCase(saveTransaction.fulfilled, (state) => {
+      .addCase(saveTransaction.fulfilled, (state, action) => {
         state.loading = false;
-        // List will be refetched by page to keep pagination synced
+        if (action.payload?.transaction) {
+          const txn = action.payload.transaction;
+          if (action.payload.isEdit) {
+            state.items = state.items.map((item) => (item._id === txn._id ? txn : item));
+          } else {
+            // Prepend new transaction so it appears immediately at the top
+            state.items = [txn, ...state.items];
+            state.pagination.total = (state.pagination.total || 0) + 1;
+          }
+        }
       })
       .addCase(saveTransaction.rejected, (state, action) => {
         state.loading = false;

@@ -6,6 +6,14 @@ import Input from '../common/Input.jsx';
 import Select from '../common/Select.jsx';
 import aiService from '../../services/aiService.js';
 
+function getLocalDateString(dateInput) {
+  const d = dateInput ? new Date(dateInput) : new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 export function TransactionForm({
   initialData = null,
   onSave,
@@ -26,9 +34,7 @@ export function TransactionForm({
   );
   const [paymentMethod, setPaymentMethod] = useState(initialData?.paymentMethod || 'upi');
   const [transactionDate, setTransactionDate] = useState(
-    initialData?.transactionDate
-      ? new Date(initialData.transactionDate).toISOString().split('T')[0]
-      : new Date().toISOString().split('T')[0]
+    getLocalDateString(initialData?.transactionDate)
   );
   const [description, setDescription] = useState(initialData?.description || '');
   const [errors, setErrors] = useState({});

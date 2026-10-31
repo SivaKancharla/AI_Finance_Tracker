@@ -116,9 +116,13 @@ export const getTransactions = async (req, res) => {
 
   const sortOptions = {
     latest: { transactionDate: -1, _id: -1 },
+    '-transactionDate': { transactionDate: -1, _id: -1 },
     oldest: { transactionDate: 1, _id: 1 },
+    transactionDate: { transactionDate: 1, _id: 1 },
     amount_desc: { amount: -1, _id: -1 },
-    amount_asc: { amount: 1, _id: 1 }
+    '-amount': { amount: -1, _id: -1 },
+    amount_asc: { amount: 1, _id: 1 },
+    amount: { amount: 1, _id: 1 }
   };
   const selectedSort = sortOptions[sort] || sortOptions.latest;
 

@@ -32,6 +32,17 @@ export const transactionQuerySchema = z.object({
   search: z.string().optional(),
   from: z.string().optional(),
   to: z.string().optional(),
-  sort: z.enum(['latest', 'oldest', 'amount_desc', 'amount_asc']).default('latest')
+  sort: z
+    .enum([
+      'latest',
+      'oldest',
+      'amount_desc',
+      'amount_asc',
+      '-transactionDate',
+      'transactionDate',
+      '-amount',
+      'amount'
+    ])
+    .default('latest')
 });
 
