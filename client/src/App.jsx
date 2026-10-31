@@ -1,23 +1,69 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { refreshUser, logout } from './redux/slices/authSlice.js';
+import { fetchMeta } from './redux/slices/metaSlice.js';
 
-function App() {
+import Layout from './components/layout/Layout.jsx';
+import ProtectedRoute from './components/layout/ProtectedRoute.jsx';
+
+import Login from './pages/Login.jsx';
+import Signup from './pages/Signup.jsx';
+import Dashboard from './pages/Dashboard.jsx';
+import Transactions from './pages/Transactions.jsx';
+import Import from './pages/Import.jsx';
+import Budget from './pages/Budget.jsx';
+import Insights from './pages/Insights.jsx';
+import Reports from './pages/Reports.jsx';
+import Profile from './pages/Profile.jsx';
+import NotFound from './pages/NotFound.jsx';
+
+export function App() {
+  const dispatch = useDispatch();
+  const token = useSelector((state) => state.auth.token);
+
+  useEffect(() => {
+    // Global listener for 401 Unauthorized API responses
+    const handleUnauthorized = () => {
+      dispatch(logout());
+    };
+    window.addEventListener('auth:unauthorized', handleUnauthorized);
+
+    // Initial data hydration
+    dispatch(fetchMeta());
+    if (token) {
+      dispatch(refreshUser());
+    }
+
+    return () => {
+      window.removeEventListener('auth:unauthorized', handleUnauthorized);
+    };
+  }, [dispatch, token]);
+
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col justify-center items-center p-6">
-      <div className="max-w-md w-full bg-white rounded-xl shadow-md p-8 text-center border border-slate-200">
-        <div className="w-12 h-12 bg-indigo-600 text-white rounded-lg flex items-center justify-center mx-auto mb-4 font-bold text-xl">
-          FT
-        </div>
-        <h1 className="text-2xl font-bold text-slate-900 mb-2">FinTrack</h1>
-        <p className="text-slate-600 text-sm mb-6">
-          AI-Powered Personal Finance Tracker
-        </p>
-        <div className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
-          Scaffold Active & Ready (Phase P0)
-        </div>
-      </div>
-    </div>
+    <Routes>
+      {/* Public Authentication Routes */}
+      <Route path="/login" element={<Login />} />
+      <Route path="/signup" element={<Signup />} />
+
+      {/* Protected App Routes */}
+      <Route element={<ProtectedRoute />}>
+        <Route element={<Layout />}>
+          <Route index element={<Navigate to="/dashboard" replace />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/transactions" element={<Transactions />} />
+          <Route path="/import" element={<Import />} />
+          <Route path="/budget" element={<Budget />} />
+          <Route path="/insights" element={<Insights />} />
+          <Route path="/reports" element={<Reports />} />
+          <Route path="/profile" element={<Profile />} />
+        </Route>
+      </Route>
+
+      {/* 404 Route */}
+      <Route path="*" element={<NotFound />} />
+    </Routes>
   );
 }
 
 export default App;
-

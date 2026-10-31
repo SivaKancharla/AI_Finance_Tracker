@@ -168,3 +168,27 @@
 ### In-Memory TTL Caching
 - **Plain Meaning**: Storing computational or external API results in process RAM for a specified Time-To-Live duration to eliminate repetitive, expensive calls.
 - **Where it appears in FinTrack**: `insightsCache` in [`server/src/services/ai/insights.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/services/ai/insights.js) caches monthly insights for 10 minutes per user.
+
+---
+
+## 9. Frontend Architecture, React & Browser APIs (Phase P6)
+
+### React Reconciliation & Virtual DOM
+- **Plain Meaning**: React's core rendering mechanism that compares an in-memory Virtual DOM tree against the previous tree using an $O(N)$ heuristic diffing algorithm, applying only the necessary minimal mutations to the real browser DOM.
+- **Where it appears in FinTrack**: All dynamic lists (transaction ledger, category limit rows, preview tables) use stable `key` attributes to optimize re-renders.
+
+### Debouncing vs. Throttling
+- **Plain Meaning**: Debouncing delays execution until a user has stopped triggering events for a specified duration ($N$ ms idle). Throttling enforces a maximum execution frequency (at most once every $N$ ms) regardless of trigger frequency.
+- **Where it appears in FinTrack**: `useDebounce` hook (400ms on search query input, 600ms on transaction form AI suggestion).
+
+### AbortController & Request Cancellation
+- **Plain Meaning**: A standard Web API interface that can cancel in-flight HTTP requests and DOM asynchronous operations via an `AbortSignal`, preventing race conditions and saving network bandwidth.
+- **Where it appears in FinTrack**: `TransactionForm.jsx` cancels pending `/api/ai/categorize` requests when a user edits the transaction title or amount before the previous call finishes.
+
+### Synchronous State Hydration
+- **Plain Meaning**: Reading persisted credentials (e.g. from `localStorage`) during initial Redux state initialization rather than in an asynchronous effect hook, eliminating intermediate loading states or login screen flashes.
+- **Where it appears in FinTrack**: `authSlice.js` derives `isAuthenticated: Boolean(localStorage.getItem('token'))` immediately on module load.
+
+### Cumulative Layout Shift (CLS) & Skeletons
+- **Plain Meaning**: A Core Web Vital metric measuring visual stability. Skeletons reserve layout space with animated placeholder shapes so content doesn't abruptly push surrounding elements when loaded.
+- **Where it appears in FinTrack**: `SkeletonCard` and `SkeletonChart` maintain fixed heights while dashboard summary and Recharts data load.

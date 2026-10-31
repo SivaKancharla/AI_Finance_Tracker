@@ -360,3 +360,49 @@
 - **Cause**: The test was checking draft schemas from Phase P3 (`limit` instead of `suggestedLimit`, `savingsTips` instead of `tips`, `message` instead of `detail`).
 - **Fix**: Updated `promptsAndSchemas.test.js` to validate the finalized Phase P5 schema definitions.
 - **Lesson**: Whenever schemas evolve from placeholder draft to production spec, update unit test schema fixtures in tandem.
+
+---
+
+## Phase P6: React Frontend (Vite + Tailwind CSS + Redux Toolkit + Recharts)
+**Status:** Completed
+
+### Deliverables & Accomplishments
+1. **Tooling & Asset Configuration (`client/`)**:
+   - Pinned `tailwindcss@3.4.14` with `@tailwind` directives in `index.css`.
+   - Integrated `lucide-react` for clean, professional SVG icons.
+   - Copied synthetic `sample_statement.csv` (41 rows) to `client/public/` for one-click demo downloads.
+   - Tested production bundling with Vite: `npm run build` compiles 2,992 modules in ~17s with zero errors.
+
+2. **API & Service Layer (`client/src/services/`)**:
+   - `api.js`: Centralized Axios instance with `baseURL = import.meta.env.VITE_API_URL || '/api'`.
+   - Request interceptor: Strictly attaches `Authorization: Bearer ${token}` with required space.
+   - Response interceptor: Clears token and broadcasts `auth:unauthorized` event **strictly on HTTP 401** (temporary network errors never clear session).
+   - Fully typed client service modules: `authService`, `transactionService`, `importService`, `budgetService`, `dashboardService`, `reportService`, `aiService`, `metaService`.
+
+3. **Global State Management (`client/src/redux/`)**:
+   - Slices:
+     - `authSlice`: Synchronous session hydration from `localStorage` to avoid login-page flashes; `refreshUser` keeps session on network errors; `loginUser`, `signupUser`, `logout`, `updateProfileThunk`.
+     - `metaSlice`: Caches expense/income categories and payment methods with offline fallback arrays.
+     - `transactionSlice`: Manages paginated ledger items, filter states (`search`, `type`, `category`, `sort`, `page`), and CRUD thunks.
+     - `budgetSlice`: Tracks `monthlyBudget` and `categoryBudgets`.
+     - `insightsSlice`: Houses AI insights, provider badge, forecast metrics, and 30-day reliability statistics.
+     - `uiSlice`: Toast notification queue supporting auto-dismissing feedback messages.
+
+4. **Reusable UI System & Custom Hooks (`client/src/components/common/`, `client/src/hooks/`)**:
+   - `useDebounce`: Custom hook for 400ms filter search and 600ms live AI categorization.
+   - `useMonthParam`: Manages `?month=YYYY-MM` URL search param with IST default and prev/next month traversal.
+   - Reusable components: `Button` (5 variants with loading spinners), `Input`, `Select`, `Modal` (accessible with Esc key trap), `ConfirmDialog`, `Badge` (with source chips: AI, Learned, Rule, Review), `ToastContainer`, `Pagination`, `EmptyState`, `ErrorBanner`, and `SkeletonCard`/`SkeletonChart`.
+
+5. **Application Pages & User Flows (`client/src/pages/`)**:
+   - `Login` & `Signup`: Clean auth forms with inline validation, password min 8, and one-click demo credentials button.
+   - `Dashboard`: 4 summary metric cards, monthly budget progress bar, 6-month historical spending trend area chart, category donut chart, income vs expense bar chart, run-rate forecast risk banner, and recent transactions list.
+   - `Transactions`: Complete ledger with URL-synced debounced filters, source badges, pagination, delete confirm dialog, and an interactive Add/Edit modal featuring **live AI categorization suggestions** (`POST /api/ai/categorize`) with `AbortController` cancellation.
+   - `Import`: 3-step statement wizard (Upload dropzone $\to$ Review table with category editing, dedupe flags, and confidence ratings $\to$ Commit summary with active learning).
+   - `Budget`: Monthly budget input, per-category limit rows with current month progress, and **AI Suggest Budget** modal with 100/90/95 heuristic fallback.
+   - `Insights`: Dynamic financial health cards (info/warning/critical), run-rate forecast panel, and 30-day AI reliability telemetry.
+   - `Reports`: Monthly summary, category bar chart, transaction table, and streaming **Export PDF** download (`finance-report-YYYY-MM.pdf`).
+   - `Profile`: Update name/email, change password, and view account stats.
+
+6. **Verification & Build Status**:
+   - `npm run build` in `client/` succeeded in ~17.06s.
+   - `npm test` in `server/` passed 100% across all 24 test suites (147 tests green).

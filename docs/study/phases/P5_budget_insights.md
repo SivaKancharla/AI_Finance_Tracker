@@ -312,3 +312,4 @@ In Phase P6, we build the complete client dashboard in React + Vite + Tailwind C
 - CSV statement upload modal with preview table and duplicate rejection counts.
 - AI Budget Optimizer modal with interactive sliders and one-click accept.
 - Financial insights feed with severity badges (`info`, `warning`, `critical`).
+

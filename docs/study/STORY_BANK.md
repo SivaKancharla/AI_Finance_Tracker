@@ -132,3 +132,22 @@
 > To permanently guard against this, I implemented proportional scaling in `repairBudgetSuggestions`: if `sum(categoryLimits) > monthlyBudget`, we compute `scale = budget / sum` and multiply each limit by that ratio, rounding to whole rupees."*
 >
 > **Result**: *"The fix hardened our financial constraints. Not only did our unit tests pass, but our AI budget optimizer mathematically guarantees that proposed category limits can never exceed the total monthly budget or the user's verified income."*
+
+---
+
+## Story 8: The AI Auto-Suggest Race Condition & AbortController `[DRAFT - verify]`
+- **Theme**: Frontend Engineering, Asynchronous Race Conditions, UX Polish, Network Optimization
+- **When to tell this**: *"Tell me about a complex frontend bug you solved,"* or *"How do you handle asynchronous operations and race conditions in React?"*
+
+### Spoken Answer (60–90 seconds)
+> **Situation**: *"When building the live AI categorization feature in `TransactionForm.jsx` during Phase P6, I wanted the app to suggest categories automatically as the user typed the transaction title."*
+>
+> **Task**: *"I implemented a standard 600ms debounce before calling `POST /api/ai/categorize`. But during fast manual testing, I noticed an intermittent bug: if I typed 'Swiggy', waited briefly, then quickly changed my mind, backspaced, and typed 'Uber', the suggestion chip would occasionally flip from 'Transport' back to 'Food' a second later! Outdated data was overwriting newer input."*
+>
+> **Action**: *"I diagnosed this as an asynchronous race condition: even with debouncing, if the 'Swiggy' request takes 900ms and the 'Uber' request takes 300ms, the 'Swiggy' response arrives last and overwrites the state.
+> 
+> To eliminate this, I integrated the standard browser `AbortController` API inside the `useEffect` hook. I stored the controller in a mutable `useRef`. Whenever the user keystroke triggers a re-render or the component unmounts, the cleanup function immediately calls `controller.abort()`, passing the `signal` to Axios. 
+> 
+> The browser cancels the in-flight network request immediately. I also handled `CanceledError` cleanly in the catch block so aborted requests produce zero console noise or error banners."*
+>
+> **Result**: *"The race condition was completely eliminated. The form displays only the suggestion matching the user's latest text with zero latency conflicts or stale data bugs."*

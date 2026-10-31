@@ -240,3 +240,37 @@
 - **Tags**: `[Intermediate]` `[Backend]` `[SDE]`
 - **15-second answer**: We compute `scale = suggestedMonthlyBudget / sum(categoryLimits)` and multiply every category limit by `scale`, rounding to whole rupees.
 - **60-second spoken answer**: *"Even with zero temperature, an LLM might propose category limits totaling ₹45,000 for a ₹40,000 budget. In `repairBudgetSuggestions`, we calculate the total sum of all valid category limits. If this sum exceeds the proposed monthly budget, we calculate a proportional scaling factor ($40000 / 45000 = 0.8889$) and scale down each individual category limit by this ratio. This preserves the relative spending priority between categories while guaranteeing that the total category limits never exceed the monthly budget."*
+
+---
+
+## 10. Frontend Architecture, React & State Management (Phase P6)
+
+#### Q31: How do you prevent race conditions when debouncing search or AI suggestions in React?
+- **Tags**: `[MUST]` `[All Roles]` `[Frontend|SDE]`
+- **15-second answer**: By pairing our debounce timer with an `AbortController` in the `useEffect` cleanup function to abort stale in-flight HTTP requests.
+- **60-second spoken answer**: *"When typing in an auto-suggest field, the user might pause at 600ms to trigger request A, then immediately continue typing to trigger request B. If request A takes 800ms and request B takes 300ms, request A resolves last, overwriting the UI with outdated results. In FinTrack, we store an `AbortController` in a `useRef`. Whenever the effect re-runs or unmounts, the cleanup function immediately calls `controller.abort()`. The browser aborts the prior network request, guaranteeing only the latest user input updates the screen."*
+- **Follow-ups**:
+  - *Q: How does Axios handle `AbortController`?* -> *A: Axios accepts `{ signal: controller.signal }` in its request config and throws `CanceledError` when aborted.*
+  - *Q: Why wrap the controller in `useRef`?* -> *A: A ref persists the mutable controller instance across renders without triggering unnecessary re-renders.*
+- **Trap**: Claiming debouncing alone prevents race conditions. Debouncing only delays invocation; it does not control server network response ordering.
+
+#### Q32: Why store JWT in `localStorage` vs. an `httpOnly` cookie? What are the trade-offs?
+- **Tags**: `[MUST]` `[Product|Startup]` `[Security]`
+- **15-second answer**: `localStorage` is simpler for cross-origin SPA architectures but vulnerable to XSS; `httpOnly` cookies are immune to XSS but require CSRF protection.
+- **60-second spoken answer**: *"In FinTrack, we store the JWT in `localStorage` and transmit it via the `Authorization: Bearer` header. The benefit is architectural simplicity: it works seamlessly when the frontend and backend are hosted on separate domains without complex cookie domain configuration. The security downside is that any Cross-Site Scripting (XSS) vulnerability can access `localStorage`. An `httpOnly` cookie is more secure against XSS because JavaScript cannot read it, but requires anti-CSRF tokens and SameSite cookie configurations. In our app, we mitigate XSS risks through React's automatic string escaping and Helmet CSP headers."*
+- **Trap**: Never claim `localStorage` is 100% secure. Acknowledge the XSS trade-off and explain how you mitigate it.
+
+#### Q33: How does React's Virtual DOM and reconciliation algorithm work?
+- **Tags**: `[MUST]` `[Basic]` `[All Roles]`
+- **15-second answer**: React builds a lightweight in-memory representation of the UI (Virtual DOM), compares it with the previous tree (diffing), and batches only the necessary changes to the real DOM.
+- **60-second spoken answer**: *"Direct DOM manipulation is computationally expensive because browser layout recalculation and repaints take time. When state changes in React (e.g. `setFilters`), React re-renders the component in its Virtual DOM. It uses an $O(N)$ heuristic diffing algorithm: comparing element types, component keys, and attribute changes. It calculates the exact delta (reconciliation) and batches updates to the real DOM in a single pass. In FinTrack, passing unique `key={t._id}` on transaction rows ensures React only modifies the specific row updated rather than re-rendering the entire table."*
+
+#### Q34: Why derive `isAuthenticated` synchronously from `localStorage` in Redux?
+- **Tags**: `[SHOULD]` `[Frontend]` `[SDE]`
+- **15-second answer**: To avoid a visible flash of the login page on browser reload while an asynchronous user verification request is pending.
+- **60-second spoken answer**: *"If `isAuthenticated` is initialized to `false` and only set to `true` after an asynchronous `/api/auth/me` request resolves, `ProtectedRoute` will briefly detect an unauthenticated user on every hard refresh and redirect them to `/login` for a fraction of a second. By initializing `isAuthenticated: Boolean(localStorage.getItem('token'))`, the application routes synchronously to the protected dashboard on mount, then verifies the token asynchronously in the background. If the token is expired (401), it redirects cleanly."*
+
+#### Q35: How do you prevent Cumulative Layout Shift (CLS) on data dashboards?
+- **Tags**: `[SHOULD]` `[Frontend]` `[Product]`
+- **15-second answer**: By rendering fixed-height skeleton placeholders (`SkeletonCard`, `SkeletonChart`) that match the exact visual dimensions of the loaded content.
+- **60-second spoken answer**: *"If a page renders an empty container that suddenly expands to 300px when data loads, the rest of the page jumps downward, causing a jarring user experience and a poor Google Web Vitals CLS score. In FinTrack, we created reusable `SkeletonCard` and `SkeletonChart` components with Tailwind pulses. While `loading` is true, the cards occupy their full 72px and 288px heights. When the API response arrives, the skeletons are replaced with zero layout jumping."*
