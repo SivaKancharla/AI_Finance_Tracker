@@ -89,5 +89,27 @@
 >
 > **Result**: *"The test suite immediately passed with 100% mocked isolation, zero network calls to Groq or Gemini, and rock-solid resilience testing for schema repair loops."*
 
+---
+
+## Story 6: The Occurrence Indexing Dilemma in Statement Deduplication `[DRAFT - verify]`
+- **Theme**: System Design, Algorithmic Thinking, Database Constraints, Edge Cases
+- **When to tell this**: *"Tell me about a non-trivial algorithm or data structure you designed,"* or *"How do you handle data deduplication?"*
+
+### Spoken Answer (60–90 seconds)
+> **Situation**: *"When designing the CSV statement import pipeline in Phase P4, I needed to prevent duplicate transactions if a user accidentally re-imported the same bank statement."*
+>
+> **Task**: *"A naive hash on `(date + amount + title)` creates a serious false-positive bug: if a user buys two teas at Chai Point on the same day for ₹80 each, the second purchase would be rejected as a duplicate! But if I don't hash them, re-importing a statement duplicates every transaction."*
+>
+> **Action**: *"I solved this by introducing an occurrence index:
+> `sha1(userId | date | amount | type | normalizedTitle | occurrenceIndex)`.
+> In `dedupe.js`, as we stream through the uploaded CSV rows, we maintain an in-memory `Map` tracking how many times each `(date, amount, type, normalizedTitle)` tuple has appeared earlier in the same file.
+> 
+> The first Chai Point purchase gets index 0; the second gets index 1, producing two completely distinct hashes. Both are saved cleanly.
+> 
+> When the user re-imports that same CSV file later, the two rows again receive index 0 and index 1 in the exact same sequence. The server checks MongoDB, finds both hashes already exist, and skips them with 100% precision."*
+>
+> **Result**: *"Our deduplication algorithm eliminates 100% of duplicate imports without dropping a single legitimate repeat purchase, verified by automated unit and integration tests."*
+
+
 
 

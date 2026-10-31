@@ -121,5 +121,26 @@
 - **Plain Meaning**: An attack where untrusted user input tricks the LLM into executing malicious instructions. Defended against by encapsulating user input inside XML tags and strictly commanding the model to treat tag contents as literal string data.
 - **Where it appears in FinTrack**: [`server/src/services/llm/prompts.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/services/llm/prompts.js) wraps transaction titles in `<transactions><transaction><title>` tags.
 
+---
+
+## 7. Data Ingestion, Hashing & Idempotency (Phase P4)
+
+### Idempotency
+- **Plain Meaning**: A mathematical property where an operation can be applied multiple times without changing the result beyond the initial application ($f(f(x)) = f(x)$).
+- **Where it appears in FinTrack**: Re-importing the same CSV statement multiple times results in 0 newly inserted rows and flags 100% of the transactions as duplicates via SHA-1 hashing.
+
+### Occurrence Indexing in Deduplication
+- **Plain Meaning**: Appending an incremental integer counter to identical data signatures within a batch to allow legitimate same-day duplicate purchases while preserving idempotency across repeat imports.
+- **Where it appears in FinTrack**: [`server/src/services/import/dedupe.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/services/import/dedupe.js) assigns `occurrenceIndex` (0, 1, 2...) for identical `(date, amount, type, normalizedTitle)` tuples.
+
+### Unordered Bulk Insert (`{ ordered: false }`)
+- **Plain Meaning**: A database batch-insertion mode where individual document write errors (such as duplicate-key violations) do not stop MongoDB from attempting to insert all remaining documents in the array.
+- **Where it appears in FinTrack**: [`server/src/controllers/import.controller.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/controllers/import.controller.js) uses `Transaction.insertMany(docs, { ordered: false })` so existing duplicates never abort remaining valid rows.
+
+### Multipart/form-data & Memory Buffers
+- **Plain Meaning**: An encoding standard for HTTP POST requests allowing binary files to be transmitted in segmented boundaries. Storing files in RAM (`memoryStorage`) avoids disk I/O and server filesystem vulnerabilities for small files.
+- **Where it appears in FinTrack**: [`server/src/middleware/upload.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/middleware/upload.js) parses CSV uploads into `req.file.buffer` with an explicit 1MB cap.
+
+
 
 

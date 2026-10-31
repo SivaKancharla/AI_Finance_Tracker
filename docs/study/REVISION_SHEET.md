@@ -18,10 +18,12 @@
 ---
 
 ## 3. Real Numbers You Can Quote Right Now
-- **Automated Tests**: **104 passing tests across 17 test suites** in Jest ESM with `mongodb-memory-server` (~74s total run).
+- **Automated Tests**: **129 passing tests across 21 test suites** in Jest ESM with `mongodb-memory-server` (~74s total run).
 - **User Isolation**: Verified across get, list, update, and delete endpoints with 0 cross-tenant data leaks.
+- **Statement Deduplication**: 100% duplicate rejection on re-importing identical bank statements.
 - **AI Latency**: < 5ms for recurring merchants via `CategoryMemory` vs ~600ms for LLM calls.
 - **PII Leakage**: 0% leaked — 100% of emails, Indian phones, PAN cards, and Aadhaar numbers masked before transit.
+- **Import Capacity**: Bounded at 500 rows and 1MB per file upload for memory safety.
 - **Outbound Rate Limiting**: 10 RPM client-side `RateGate` preventing third-party quota exhaustion.
 - **Rate Limits**: 300 req/15m for API, 20 req/15m for Auth, 30 req/15m for AI.
 - **Forecasting Confidence**: Clamped to 30%–90%, penalized dynamically by spending volatility ($CV$).
@@ -29,40 +31,44 @@
 ---
 
 ## 4. Top 10 Design Decisions & Why
-1. **Zod Validation for Env, Requests & LLMs**: Fails fast on boot; validates all API bodies to block NoSQL injection; parses structured LLM output with repair loops.
-2. **Stateless JWTs**: Avoids server-side session lookups on every request, scaling horizontally.
-3. **Compound Index `{ userId: 1, transactionDate: -1 }`**: Eliminates in-memory sorting for recent transaction queries.
-4. **Partial Unique Index on `dedupeHash`**: Guarantees CSV statement deduplication without breaking manual entries.
+1. **Two-Step Preview $\rightarrow$ Commit Import**: Gives user full editorial control over AI categories; 0 database writes in preview.
+2. **Occurrence-Indexed SHA-1 Deduplication**: Allows genuine same-day repeat purchases while guaranteeing 100% duplicate rejection on re-import.
+3. **Partial Unique Index on `dedupeHash`**: Guarantees CSV statement deduplication without breaking manual entries where `dedupeHash` is null.
+4. **Unordered Bulk Insert (`{ ordered: false }`)**: Inserts all non-duplicate documents even if earlier rows trigger duplicate-key errors (E11000).
 5. **Deterministic Math vs. Generative Words**: LLMs categorize text; pure JavaScript code computes all numbers.
 6. **Per-User `CategoryMemory`**: Learns user category corrections instantly with zero fine-tuning costs; never lets LLM overwrite user edits.
 7. **Multi-Provider Fallback Chain**: Groq (Llama 3.3 70B) -> Gemini 2.5 Flash -> Regex Rules -> Default 'Other'; app never halts on AI outage.
 8. **Client-Side Outbound Rate Gate (10 RPM)**: Protects app from provider 429 errors on free tiers.
 9. **Defense-in-Depth PII Masking**: Automatically strips sensitive IDs (PAN, Aadhaar, phones) before sending to external AI APIs.
-10. **In-Memory Integration Tests**: Uses real MongoDB in RAM instead of fake mocks for 100% realistic test coverage across 104 tests.
+10. **In-Memory Integration Tests**: Uses real MongoDB in RAM instead of fake mocks for 100% realistic test coverage across 129 tests.
 
 ---
 
 ## 5. Ten Must-Know Concepts (1-Line Definitions)
-1. **Structured Output**: Forcing an LLM to reply strictly in valid JSON adhering to a JSON Schema rather than free-form text.
-2. **Temperature (0.1)**: Controls randomness; low values guarantee deterministic, reproducible categorization.
-3. **Self-Repair Loop**: Feeding schema validation errors back to the LLM once so it can correct its own malformed JSON.
-4. **Exponential Backoff with Jitter**: Progressively doubling retry delays while adding random noise to avoid thundering herds.
-5. **PII Sanitization**: Masking sensitive personal identifiers (PAN, phone, Aadhaar) before data leaves server boundaries.
-6. **Authentication vs Authorization**: AuthN = verifying identity (login); AuthZ = verifying permissions (user data isolation).
-7. **CORS**: Browser-enforced rule restricting web pages on domain A from making requests to domain B.
-8. **Compound Index**: Multi-field B-tree index speeding up queries filtering and sorting on those fields.
-9. **Draft-7 Rate Limiter**: Standards-compliant rate limiting sending `RateLimit-Limit` and `RateLimit-Remaining` headers.
+1. **Idempotency**: An operation that produces the exact same system state whether executed once or repeatedly (statement re-import).
+2. **Occurrence Indexing**: Appending an incremental integer counter to identical data signatures within a batch to prevent false duplicate rejection.
+3. **Structured Output**: Forcing an LLM to reply strictly in valid JSON adhering to a JSON Schema rather than free-form text.
+4. **Temperature (0.1)**: Controls randomness; low values guarantee deterministic, reproducible categorization.
+5. **Self-Repair Loop**: Feeding schema validation errors back to the LLM once so it can correct its own malformed JSON.
+6. **Exponential Backoff with Jitter**: Progressively doubling retry delays while adding random noise to avoid thundering herds.
+7. **PII Sanitization**: Masking sensitive personal identifiers (PAN, phone, Aadhaar) before data leaves server boundaries.
+8. **Partial Unique Index**: An index created only on documents that match a specific filter condition (e.g. `dedupeHash` is string).
+9. **Unordered Bulk Insert**: MongoDB write mode (`ordered: false`) where errors in one document do not cancel remaining inserts.
 10. **Fail-Fast**: Crashing immediately at boot when required configurations are missing rather than mid-request.
 
 ---
 
 ## 6. Ten Likely Questions with 1-Line Spoken Answers
-1. *Why use MongoDB?* -> "Transactions have varied semi-structured metadata (UPI refs, dedupe hashes, AI confidence) that fit a document model cleanly."
-2. *How is data isolated between users?* -> "Every controller query explicitly includes `{ userId: req.userId }`, verified by automated tests."
-3. *What happens if Groq and Gemini are both down?* -> "The pipeline logs the outage and seamlessly falls back to our deterministic regex rules and default category."
-4. *How do you prevent prompt injection?* -> "We isolate user input inside XML tags, enforce system anti-injection rules, and whitelist outputs with Zod enums."
+1. *How do you prevent duplicate transactions when importing CSVs?* -> "We compute an occurrence-indexed SHA-1 hash and enforce uniqueness with a MongoDB partial unique index."
+2. *Why use a two-step preview/commit flow?* -> "It lets the user verify and edit AI-suggested categories before any data is written to the database."
+3. *How is data isolated between users?* -> "Every controller query explicitly includes `{ userId: req.userId }`, verified by automated tests."
+4. *What happens if Groq and Gemini are both down?* -> "The pipeline logs the outage and seamlessly falls back to our deterministic regex rules and default category."
 5. *Why do you have CategoryMemory?* -> "80% of transactions are recurring merchants; memory resolves in 2ms and saves API cost and quota."
 6. *Why add jitter to backoff?* -> "It prevents concurrent retrying requests from syncing up and hammering the server at the exact same millisecond."
+7. *How do you test LLMs without spending money?* -> "We mock provider responses in Jest while testing our full parsing, schema validation, and repair loops."
+8. *Why is spending forecast deterministic?* -> "Financial projections on sparse personal data are pure arithmetic; deterministic math avoids hallucinations."
+9. *What is draft-7 rate limiting?* -> "It uses standardized HTTP headers (`RateLimit-Remaining`) instead of legacy `X-RateLimit` headers."
+10. *How do you handle file uploads securely?* -> "We cap files at 1MB, validate MIME types and `.csv` extensions, and parse in memory buffers without disk storage."
 7. *How do you test LLMs without spending money?* -> "We mock provider responses in Jest while testing our full parsing, schema validation, and repair loops."
 8. *Why is spending forecast deterministic?* -> "Financial projections on sparse personal data are pure arithmetic; deterministic math avoids hallucinations."
 9. *What is draft-7 rate limiting?* -> "It uses standardized HTTP headers (`RateLimit-Remaining`) instead of legacy `X-RateLimit` headers."

@@ -1,5 +1,5 @@
 # 00 — Project Overview (Cumulative)
-*Last updated: Phase P3 (LLM Service Layer, Resilience & Categorization Pipeline)*
+*Last updated: Phase P4 (CSV Statement Import, Deduplication & Active Learning)*
 
 ---
 
@@ -117,11 +117,12 @@ When an interviewer asks you to draw your system on a whiteboard, draw these 5 b
 | **C2** | PII Sanitization & AI Observability Monitoring | Local regex masking for PAN, Aadhaar, phones, emails before API call; `AiCallLog` tracking latency, error rates, p95 without saving user text | [`server/src/services/categorization/piiMask.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/services/categorization/piiMask.js), [`server/src/models/AiCallLog.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/models/AiCallLog.js), [`GET /api/ai/stats`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/controllers/ai.controller.js) |
 | **C4** | Secure REST APIs with Node, Express, MongoDB & JWT | Automated isolation tests, generic 401s, bcryptjs salting, draft-7 rate limits, Zod validation | [`server/src/middleware/auth.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/middleware/auth.js), [`server/tests/isolation.test.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/tests/isolation.test.js) |
 | **C5** | Month-Scoped Dashboard Summary & 6-Month Spending Trend | Pure aggregation functions in `summary.js`, 6-month window query in `dashboard.controller.js` | [`server/src/services/analytics/summary.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/services/analytics/summary.js), [`server/src/controllers/dashboard.controller.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/controllers/dashboard.controller.js) |
+| **C6** | Bulk Transaction Ingestion, Deduplication & NoSQL Storage | Two-step preview-then-commit import; occurrence-indexed SHA-1 hashing yielding 100% duplicate rejection; flexible HDFC/ICICI/SBI parsing | [`server/src/controllers/import.controller.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/controllers/import.controller.js), [`server/src/services/import/dedupe.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/services/import/dedupe.js), [`server/tests/importEndpoints.test.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/tests/importEndpoints.test.js) |
 | **C7** | Deterministic Run-Rate Spending Forecast & PDF Reports | Statistical run-rate blending with historical averages and volatility penalty; streaming PDFKit generation | [`server/src/services/analytics/forecast.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/services/analytics/forecast.js), [`server/src/controllers/report.controller.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/controllers/report.controller.js) |
 | **P1** | Per-User Merchant Learning Memory | Updating a transaction category immediately writes a high-confidence memory entry that overrides future rules; user overrides are protected | [`server/src/models/CategoryMemory.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/models/CategoryMemory.js), [`transaction.controller.js:updateTransaction`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/controllers/transaction.controller.js) |
 | **P1** | Robust Multi-key Indexing & NoSQL Schema Design | Compound indexing on `{ userId, transactionDate }` and partial unique index on `{ userId, dedupeHash }` | [`server/src/models/Transaction.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/models/Transaction.js) |
 
-*Note: Claims regarding CSV Import (C6), Frontend Recharts UI (C5), and Offline Eval Accuracy Set (C1) will be unlocked in Phases P4 through P7.*
+*Note: Claims regarding Frontend Recharts UI (C5), AI Budget Optimizer (C3), and Offline Eval Accuracy Set (C1) will be unlocked in Phases P5 through P7.*
 
 ---
 
@@ -135,7 +136,7 @@ When an interviewer asks you to draw your system on a whiteboard, draw these 5 b
 ### 3 Common Follow-up Questions & How to Answer
 
 1. **"If the AI wrote the code, how do you know it works correctly?"**
-   - *Answer*: *"Because I don't trust raw code without automated proof. I used `mongodb-memory-server` and Supertest to write 104 integration and unit tests covering negative paths: duplicate emails, wrong passwords, regex injection in search queries, cross-user data tampering, PII masking, LLM schema repairs, and provider fallback chains. If the tests pass and edge cases are verified, the implementation is solid."*
+   - *Answer*: *"Because I don't trust raw code without automated proof. I used `mongodb-memory-server` and Supertest to write 129 integration and unit tests covering negative paths: duplicate emails, wrong passwords, regex injection in search queries, cross-user data tampering, PII masking, LLM schema repairs, provider fallback chains, CSV format parsing, and statement deduplication. If the tests pass and edge cases are verified, the implementation is solid."*
 2. **"What was one architectural decision the AI tried to make that you corrected?"**
    - *Answer*: *"Initially, standard tutorials calculate budget limits against all-time spending, which is a major logic bug for a monthly tracker. I enforced calendar-month scoping in IST timezone so budget math always resets cleanly on the 1st of each month. I also pinned Tailwind to v3.4 to avoid breaking build configurations."*
 3. **"Can you make a change to the codebase right now?"**
@@ -145,6 +146,6 @@ When an interviewer asks you to draw your system on a whiteboard, draw these 5 b
 
 ## 8. Honest Limitations & What I Would Build Next
 
-1. **Current Limitation**: Bulk import of transactions from bank CSV files is currently pending implementation in Phase P4.
-2. **Next Milestone**: Phase P4 will implement streaming CSV upload, bank statement format autodetection (HDFC, ICICI, SBI), SHA-256 deduplication, and bulk categorization pipeline processing.
+1. **Current Limitation**: LLM-powered natural-language budget optimization and monthly insights generation are currently pending implementation in Phase P5.
+2. **Next Milestone**: Phase P5 will implement `POST /api/ai/budget-optimize` and `POST /api/ai/insights` with deterministic heuristic fallbacks and complete the security hardening audit.
 

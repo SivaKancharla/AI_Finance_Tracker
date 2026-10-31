@@ -219,6 +219,70 @@
 - **Fix**: Made memory persistence properly `await`ed and added an explicit check for `source !== 'user'` to avoid duplicate key errors on `{ userId: 1, key: 1 }`.
 - **Lesson**: Even background learning logic should be awaitable or sequentially coordinated in test environments.
 
+---
+
+## Phase P4: CSV Statement Import, Deduplication & Active Learning
+**Status:** Completed
+
+### Deliverables & Accomplishments
+1. **Multer Memory Upload & Security (`server/src/middleware/upload.js`)**:
+   - In-memory buffer upload with `IMPORT_MAX_BYTES` cap (1MB).
+   - Strict mimetype and `.csv` extension filtering.
+   - Clean, standardized HTTP 400 error responses for oversized files or non-CSV payloads.
+
+2. **Indian Date Parser Engine (`server/src/services/import/dateParse.js`)**:
+   - Parses `DD/MM/YYYY`, `DD-MM-YYYY`, `YYYY-MM-DD`, `YYYY/MM/DD`, `DD MMM YYYY`, and `DD-MMM-YY`.
+   - Never calls `new Date(str)` directly; enforces mathematical calendar validity (rejects 31 Feb, non-leap Feb 29).
+   - Anchors dates to IST midnight (UTC+05:30) and returns canonical `YYYY-MM-DD`.
+
+3. **CSV Statement Parser (`server/src/services/import/csvParser.js`)**:
+   - Uses `csv-parse` with `columns: true`, `trim: true`, `skip_empty_lines: true`, and BOM tolerance.
+   - Flexible header resolver mapping HDFC, ICICI, SBI synonyms (e.g. `Txn Date`, `Withdrawal/Deposit`, `Narration`).
+   - Clean amount extractor stripping currency symbols (`₹`, `Rs.`, `INR`), commas, and signed values into positive floats.
+   - Row-level validation separating valid records from invalid ones with descriptive error arrays.
+
+4. **Occurrence-Indexed Deduplication Engine (`server/src/services/import/dedupe.js`)**:
+   - Formula: `sha1(userId | YYYY-MM-DD | amount.toFixed(2) | type | normalizedTitle | occurrenceIndex)`.
+   - Appends running counter to identical same-day purchases so genuine repeats are preserved while re-importing identical files yields 100% duplicate rejection.
+
+5. **Two-Stage Import Endpoints (`server/src/controllers/import.controller.js`)**:
+   - `POST /api/transactions/import/preview`:
+     - Parses CSV and runs deduplication check in MongoDB.
+     - Runs Phase P3 categorization pipeline on uncategorized non-duplicate rows.
+     - Returns preview table with counts (`total`, `valid`, `invalid`, `duplicates`, `needsReview`, `bySource`).
+     - **Writes zero documents to MongoDB.**
+   - `POST /api/transactions/import/commit`:
+     - Server-side hash recomputation and duplicate skipping.
+     - Unordered bulk insert using `Transaction.insertMany(docs, { ordered: false })` catching E11000 duplicate keys.
+     - Active learning: rows with user category adjustments (`edited: true`) write `CategoryMemory` with `source: 'user'` and confidence `1.0`.
+
+6. **Synthetic Demo Statement (`server/eval/sample_statement.csv`)**:
+   - 41 realistic Indian transactions (HDFC style) with legitimate same-day repeats, bad rows, and pre-categorized entries for testing and live interview demos.
+
+7. **Automated Testing**:
+   - Test count expanded from 104 to **129 passing tests across 21 test suites** (100% green in ~74s).
+   - Added test suites:
+     - `dateParse.test.js` (6 tests): leap years, Indian formats, invalid dates.
+     - `dedupe.test.js` (4 tests): stable hashes, user isolation, occurrence indexes, repeat imports.
+     - `csvParser.test.js` (6 tests): debit/credit columns, currency stripping, row errors.
+     - `importEndpoints.test.js` (9 tests): preview multipart, oversize/non-csv rejection, dedupe detection, commit insertion, re-commit 100% duplicates, active learning.
+
+---
+
+## Real Problems Encountered & Fixed (Build Log - Continued)
+
+### Problem 8: Currency Abbreviation Word Boundary Matching in CleanAmount (P4)
+- **Symptom**: `cleanAmount('Rs. 450')` returned `null` instead of `450`.
+- **Cause**: The regex `\b(rs\.?|inr)\b` failed because in regular expressions, a non-word character like `.` in `Rs.` is not followed by a word boundary before a space.
+- **Fix**: Replaced regex with `/(?:^|[^\w])(?:rs\.?|inr)\s*/gi`.
+- **Lesson**: Do not rely on `\b` word boundaries adjacent to punctuation characters like dots or slashes.
+
+### Problem 9: Multer File Size Error Propagation (P4)
+- **Symptom**: When an uploaded file exceeded `IMPORT_MAX_BYTES`, Multer threw a raw `LIMIT_FILE_SIZE` error that reached the central error handler as HTTP 500.
+- **Cause**: Multer error was unhandled in route middleware.
+- **Fix**: Wrapped `upload.single('file')` in `server/src/middleware/upload.js` (`uploadCsv`), catching `LIMIT_FILE_SIZE` and returning a clean HTTP 400 response.
+- **Lesson**: Wrap third-party stream/multipart middlewares in Express error interceptors to guarantee clean 4xx client errors.
+
 
 
 

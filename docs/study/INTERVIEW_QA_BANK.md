@@ -177,5 +177,31 @@
 - **15-second answer**: 1. CategoryMemory (MongoDB cache, 2ms) -> 2. Multi-LLM (Groq / Gemini) -> 3. Deterministic Rules (Regex) -> 4. Default 'Other' (needsReview: true).
 - **60-second spoken answer**: *"Over 80% of transactions are recurring merchants, so checking `CategoryMemory` first avoids 800ms of latency and saves API quota. If the merchant is new, we query Groq or Gemini. If quotas expire or the internet fails, we fall back to a local regex keyword dictionary in `ruleCategorizer.js`. If there is no rule match, we assign 'Other' and flag `needsReview: true`. The application never fails to record a transaction due to external AI downtime."*
 
+---
+
+## 8. Data Ingestion, File Uploads & Deduplication (Phase P4)
+
+#### Q22: How do you handle file uploads securely in Node.js?
+- **Tags**: `[MUST]` `[All Roles]` `[Security]`
+- **15-second answer**: By capping file size (1MB), validating mime types and `.csv` extension, keeping data in memory buffers, and bounding row counts (500 max).
+- **60-second spoken answer**: *"File uploads present serious denial-of-service and remote code execution vulnerabilities. In FinTrack, we enforce multi-layer upload security: First, Multer enforces an explicit `fileSize: 1MB` limit (`IMPORT_MAX_BYTES`); oversized files are rejected immediately with HTTP 400. Second, the file filter checks both MIME type and the `.csv` extension. Third, we use `memoryStorage()` instead of disk storage, preventing malicious scripts from sitting on the server's filesystem. Finally, our parser strictly caps processing to `IMPORT_MAX_ROWS` (500 rows) and validates every row with Zod before database persistence."*
+- **Trap**: Storing uploads directly in public directories or trusting file extensions alone.
+
+#### Q23: What is Idempotency and how does statement import achieve it?
+- **Tags**: `[MUST]` `[Backend]` `[SDE]`
+- **15-second answer**: Idempotency means executing an operation repeatedly leaves the system in the same state; our SHA-1 deduplication ensures re-importing the same CSV inserts 0 new rows and flags 100% duplicates.
+- **60-second spoken answer**: *"In web architectures, users frequently re-upload the same bank statement by accident. In FinTrack, we guarantee idempotency via server-side SHA-1 deduplication hashing: `sha1(userId | date | amount | type | normalizedTitle | occurrenceIndex)`. When a statement is uploaded the first time, 40 transactions are created. If the user imports the identical file tomorrow, the hashes calculate identically, matching the existing records in MongoDB. Zero duplicate records are created, and the response reports `{ imported: 0, duplicates: 40 }`. The operation has zero side effects on repeated execution."*
+
+#### Q24: What is Occurrence Indexing in transaction deduplication?
+- **Tags**: `[Intermediate]` `[Backend]`
+- **15-second answer**: A running counter appended to identical transaction signatures in the same file to distinguish legitimate same-day repeat purchases from accidental duplicates.
+- **60-second spoken answer**: *"If a user buys two cups of tea at Chai Point on the same day for ₹80 each, a naive hash on date, amount, and title would treat the second cup as a duplicate and drop it. In `dedupe.js`, our `assignDedupeHashes` function tracks a running occurrence count for each unique tuple in the batch. The first tea gets index 0 and the second gets index 1, generating distinct hashes so both can be legally saved. If the user re-imports that statement later, the rows again receive index 0 and 1, exactly matching the existing database entries and rejecting both as duplicates."*
+
+#### Q25: Why did you use `ordered: false` in `Transaction.insertMany()`?
+- **Tags**: `[Intermediate]` `[Backend]` `[Database]`
+- **15-second answer**: It tells MongoDB to continue inserting all remaining non-duplicate documents even if earlier documents throw duplicate-key errors (E11000).
+- **60-second spoken answer**: *"By default, `insertMany()` executes sequentially with `ordered: true`, halting the entire batch if a single document fails. In a statement of 50 transactions where rows 10 and 20 are duplicates, `ordered: true` would insert rows 1 to 9, crash on row 10, and leave rows 11 to 50 uninserted. With `{ ordered: false }`, MongoDB parallelizes writes and attempts every document. We inspect `err.writeErrors` to count duplicate key errors as skipped duplicates while committing all remaining valid rows."*
+
+
 
 
