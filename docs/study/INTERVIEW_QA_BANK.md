@@ -117,3 +117,29 @@
 - **15-second answer**: Yes. I acted as the systems architect and reviewer; I directed an AI agent to implement the code, and I verified everything through automated testing and code review.
 - **60-second spoken answer**: *"Yes, I used Antigravity as an AI pair programmer. I defined the data models, system architecture, API contracts, and resilience patterns in detailed specifications. The AI wrote the initial boilerplate and implementation, and my role was senior review: catching subtle bugs, fixing version incompatibilities, ensuring user data isolation, and writing 48 automated integration tests using `mongodb-memory-server`. Using AI allowed me to build a production-grade multi-tier architecture in days while maintaining complete understanding and ownership of the system."*
 
+---
+
+## 6. Analytics, Timezones & Financial Math
+
+#### Q12: Why is your spending forecast deterministic rather than machine learning?
+- **Tags**: `[MUST]` `[Product]` `[AI-role]`
+- **15-second answer**: Financial forecasting on sparse personal data is an arithmetic projection, not a pattern-recognition problem; deterministic run-rates avoid hallucinations and require no training.
+- **60-second spoken answer**: *"In an interview, many candidates claim they built an 'AI model' to predict spending, which usually means they fed numbers to ChatGPT and hoped it did math correctly. In FinTrack, I deliberately kept the forecast deterministic. Personal finance data for a single user is too sparse for deep learning: users have 30 to 80 transactions a month. Our run-rate blending formula—combining current burn rate with a 3-month historical baseline weighted by elapsed days—provides instant, mathematically sound predictions without API costs, latency, or mathematical hallucinations."*
+- **Trap**: Never say "I used AI to predict next month's spending". Be proud that you used statistical engineering.
+
+#### Q13: How do you handle timezone boundaries when calculating monthly spending?
+- **Tags**: `[MUST]` `[Product]`
+- **15-second answer**: We store all dates in UTC in MongoDB, but compute the start and end of the calendar month using the user's timezone offset (IST, +330 minutes).
+- **60-second spoken answer**: *"In MongoDB, all `Date` objects are stored in UTC. If you blindly query `2026-10-01 00:00:00Z` to `2026-10-31 23:59:59Z`, you will misclassify Indian transactions. For example, an expense at 11:30 PM on October 31st in Mumbai (IST) is 6:00 PM UTC on October 31st, but an expense at 1:00 AM on November 1st IST is 7:30 PM UTC on October 31st! In `dateRange.js`, our `getMonthRange` function adjusts the UTC timestamps by `-330` minutes so that the month window matches the user's clock with exact mathematical accuracy."*
+
+#### Q14: How do you avoid floating-point errors with money in JavaScript?
+- **Tags**: `[Intermediate]` `[Product]` `[Service]`
+- **15-second answer**: By using a centralized rounding helper (`round2`) that employs `Number.EPSILON` to eliminate binary floating-point representation anomalies.
+- **60-second spoken answer**: *"In IEEE 754 floating-point arithmetic used by JavaScript, `0.1 + 0.2` evaluates to `0.30000000000000004`. If you accumulate transactions across a month, these fractions cause off-by-one-cent accounting errors. In `summary.js`, I created a `round2` utility: `Math.round((num + Number.EPSILON) * 100) / 100`. In institutional banking apps, storing amounts as integer paise or using libraries like `decimal.js` is standard. For FinTrack, rounding at aggregation boundaries ensures exact 2-decimal INR accounting."*
+
+#### Q15: How does HTTP PDF streaming work with PDFKit in Express?
+- **Tags**: `[Intermediate]` `[Product]`
+- **15-second answer**: We set headers `Content-Type: application/pdf` and `Content-Disposition: attachment`, then pipe the `PDFDocument` stream directly into the Express `res` stream.
+- **60-second spoken answer**: *"In `report.controller.js`, when a user requests `format=pdf`, we instantiate `new PDFDocument()`. In Node.js, `res` is a writable HTTP stream. By calling `doc.pipe(res)`, PDFKit writes chunks of the binary PDF directly to the network socket as they are rendered. When `doc.end()` is called, the stream closes and the browser triggers a file download dialog named `finance-report-YYYY-MM.pdf` without storing any temporary files on the server's filesystem."*
+
+

@@ -1,5 +1,5 @@
 # 00 — Project Overview (Cumulative)
-*Last updated: Phase P1 (Core Models, Auth, CRUD & Security Isolation)*
+*Last updated: Phase P2 (Analytics, Spending Trend, Forecast & PDF Export)*
 
 ---
 
@@ -113,10 +113,12 @@ When an interviewer asks you to draw your system on a whiteboard, draw these 5 b
 | # | Resume Claim | Proven By | Where in Code |
 |---|---|---|---|
 | **C4** | Secure REST APIs with Node, Express, MongoDB & JWT | Automated isolation tests, generic 401s, bcryptjs salting, draft-7 rate limits, Zod validation | [`server/src/middleware/auth.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/middleware/auth.js), [`server/tests/isolation.test.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/tests/isolation.test.js) |
+| **C5** | Month-Scoped Dashboard Summary & 6-Month Spending Trend | Pure aggregation functions in `summary.js`, 6-month window query in `dashboard.controller.js` | [`server/src/services/analytics/summary.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/services/analytics/summary.js), [`server/src/controllers/dashboard.controller.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/controllers/dashboard.controller.js) |
+| **C7** | Deterministic Run-Rate Spending Forecast & PDF Reports | Statistical run-rate blending with historical averages and volatility penalty; streaming PDFKit generation | [`server/src/services/analytics/forecast.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/services/analytics/forecast.js), [`server/src/controllers/report.controller.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/controllers/report.controller.js) |
 | **P1** | Per-User Merchant Learning Memory | Updating a transaction category immediately writes a high-confidence memory entry that overrides future rules | [`server/src/models/CategoryMemory.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/models/CategoryMemory.js), [`transaction.controller.js:updateTransaction`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/controllers/transaction.controller.js) |
 | **P1** | Robust Multi-key Indexing & NoSQL Schema Design | Compound indexing on `{ userId, transactionDate }` and partial unique index on `{ userId, dedupeHash }` | [`server/src/models/Transaction.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/models/Transaction.js) |
 
-*Note: Claims regarding CSV Import (C6), Recharts Dashboard (C5), Full LLM Pipeline (C1, C2), and Eval Accuracy (C1) will be unlocked in Phases P2 through P7.*
+*Note: Claims regarding CSV Import (C6), Frontend Recharts UI (C5), Full LLM Pipeline (C1, C2), and Eval Accuracy (C1) will be unlocked in Phases P3 through P7.*
 
 ---
 

@@ -69,3 +69,24 @@
 - **Plain Meaning**: Running automated tests against a lightweight, real database instance running entirely in system RAM (`mongodb-memory-server`) rather than mocking database queries with fake returns.
 - **Where it appears in FinTrack**: [`server/tests/setup.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/tests/setup.js) spins up an in-memory Mongo instance for Jest, ensuring all indexes, constraints, and Mongoose hooks run exactly as they would in production.
 
+---
+
+## 5. Analytics, Mathematics & Data Streams
+
+### Timezone Offsets & UTC Storage
+- **Plain Meaning**: Best-practice web architecture mandates storing all timestamps in Universal Coordinated Time (UTC). When rendering reports or filtering by calendar months, local timezone offsets (e.g. IST +05:30) must be applied to calculate correct boundaries.
+- **Where it appears in FinTrack**: [`server/src/services/analytics/dateRange.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/services/analytics/dateRange.js) computes UTC boundaries for IST calendar months.
+
+### Pure Functions in Financial Calculations
+- **Plain Meaning**: A pure function's return value depends solely on its input arguments, causing no side-effects (no network calls, no database mutations, no global state changes). This makes financial logic 100% deterministic, easy to test, and mathematically verifiable.
+- **Where it appears in FinTrack**: [`server/src/services/analytics/summary.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/services/analytics/summary.js) (`summarizeMonth`, `buildTrend`) and [`forecast.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/services/analytics/forecast.js) are pure functions.
+
+### Run-Rate Spending Projection
+- **Plain Meaning**: A statistical forecasting method that calculates the current daily spending rate ($\text{spent} / \text{daysElapsed}$) and projects it across the remaining days of the month, blended with historical averages.
+- **Where it appears in FinTrack**: [`server/src/services/analytics/forecast.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/services/analytics/forecast.js) computes end-of-month projections and triggers `budgetRisk` flags.
+
+### Writable HTTP Streams (PDF Generation)
+- **Plain Meaning**: A Node.js streaming interface that sends data in sequential binary chunks to the client socket as it is generated, avoiding storing large files in server RAM or on disk.
+- **Where it appears in FinTrack**: [`server/src/controllers/report.controller.js`](file:///c:/Users/kanch/Desktop/AI_Finance_Tracker/server/src/controllers/report.controller.js) pipes the `PDFDocument` directly into `res`.
+
+

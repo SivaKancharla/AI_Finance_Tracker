@@ -18,10 +18,11 @@
 ---
 
 ## 3. Real Numbers You Can Quote Right Now
-- **Automated Tests**: **48 passing tests across 7 test suites** in Jest ESM with `mongodb-memory-server`.
+- **Automated Tests**: **71 passing tests across 11 test suites** in Jest ESM with `mongodb-memory-server` (~29s total run).
 - **User Isolation**: Verified across get, list, update, and delete endpoints with 0 cross-tenant data leaks.
 - **Normalization Coverage**: Verified against 12 Indian merchant narration patterns.
 - **Rate Limits**: 300 req/15m for API, 20 req/15m for Auth, 30 req/15m for AI.
+- **Forecasting Confidence**: Clamped to 30%–90%, penalized dynamically by spending volatility ($CV$).
 
 ---
 

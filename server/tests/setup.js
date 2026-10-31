@@ -9,9 +9,17 @@ if (typeof jest !== 'undefined') {
 let mongoServer;
 
 export const connectTestDB = async () => {
-  mongoServer = await MongoMemoryServer.create();
+  if (!mongoServer) {
+    mongoServer = await MongoMemoryServer.create({
+      instance: {
+        launchTimeout: 60000
+      }
+    });
+  }
   const uri = mongoServer.getUri();
-  await mongoose.connect(uri);
+  if (mongoose.connection.readyState === 0) {
+    await mongoose.connect(uri);
+  }
 };
 
 export const clearTestDB = async () => {
@@ -28,6 +36,7 @@ export const closeTestDB = async () => {
   }
   if (mongoServer) {
     await mongoServer.stop();
+    mongoServer = null;
   }
 };
 

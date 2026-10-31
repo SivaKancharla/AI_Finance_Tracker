@@ -7,6 +7,9 @@ import metaRoutes from './routes/meta.routes.js';
 import authRoutes from './routes/auth.routes.js';
 import transactionRoutes from './routes/transaction.routes.js';
 import budgetRoutes from './routes/budget.routes.js';
+import dashboardRoutes from './routes/dashboard.routes.js';
+import reportRoutes from './routes/report.routes.js';
+import aiRoutes from './routes/ai.routes.js';
 
 const app = express();
 
@@ -56,6 +59,9 @@ app.use('/api/meta', metaRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/budget', budgetRoutes);
+app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/reports', reportRoutes);
+app.use('/api/ai', aiRoutes);
 
 // 404 Handler
 app.use((req, res) => {

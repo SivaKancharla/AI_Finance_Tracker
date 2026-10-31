@@ -89,6 +89,43 @@
 
 ---
 
+## Phase P2: Analytics, Spending Trend, Forecast & PDF Export
+**Status:** Completed
+
+### Deliverables & Accomplishments
+1. **Timezone-Aware Date Range Engine (`server/src/services/analytics/dateRange.js`)**:
+   - `getMonthRange(year, month, tzOffsetMinutes)` calculates UTC start and end dates (`end` exclusive) for any calendar month in IST (UTC+05:30).
+   - Accurately captures end-of-month IST boundary conditions (e.g. 23:30 IST on the last day of the month belongs to that month; 00:30 IST on the 1st belongs to the next).
+   - Handles leap year Februaries (29 days in 2024 vs 28 in 2025).
+   - Generates rolling $N$-month chronological keys (`lastNMonthKeys(6, fromMonthKey)`) cleanly rolling over year boundaries.
+
+2. **Deterministic Financial Summary & Trend (`server/src/services/analytics/summary.js`)**:
+   - Pure, zero-side-effect functions: `summarizeMonth` and `buildTrend`.
+   - `summarizeMonth`: Calculates `totalIncome`, `totalExpense`, `savings`, `monthlyBudget`, `budgetRemaining` (`null` if no budget, preventing silent substitution with savings), `budgetUsedPercent`, `categoryBreakdown` (sorted descending with percentages), and `categoryBudgetStatus` with per-category limit, spent, percent, and `over` flags.
+   - `buildTrend`: Builds a 6-month historical trend array guaranteed to contain all 6 months (filling 0 for inactive months).
+   - All monetary values formatted to 2 decimals using consistent rounding (`round2`).
+
+3. **Statistical Run-Rate Spending Forecast (`server/src/services/analytics/forecast.js`)**:
+   - Deterministic projection algorithm: `projectedMonthEnd = (spentToDate / daysElapsed) * daysInMonth`.
+   - Historical blending: Calculates 3-month complete historical mean and blends with run-rate, weighting the run-rate progressively higher as the month advances (`w = daysElapsed / daysInMonth`).
+   - Dynamic confidence meter (30% to 90%): Combines baseline months of data, day progression bonus (+10), and penalizes high month-to-month volatility using coefficient of variation ($CV$).
+   - Flags `budgetRisk` when `predictedExpense > monthlyBudget`.
+
+4. **Dashboard, Forecast & PDF Report APIs**:
+   - `GET /api/dashboard/summary?month=YYYY-MM`: Returns month summary, 6-month trend, top 5 recent transactions, and spending forecast in a single scoped database query.
+   - `POST /api/ai/predict`: Protected forecast endpoint.
+   - `GET /api/reports/monthly`: Supports `format=json` and `format=pdf`. Uses `pdfkit` to generate streaming PDF downloads with financial summaries, category splits, and transaction listings (truncated cleanly with count note at 40 rows).
+
+5. **Testing & Verification**:
+   - Total test count expanded to **71 passing tests across 11 test suites** (100% green in ~29s).
+   - Tests verify:
+     - `dateRange.test.js`: IST timezone boundary offsets, leap years, string parsing, rolling month sequences.
+     - `summary.test.js`: Financial totals, budget math, null budgetRemaining checks, category breakdown, trend filling.
+     - `forecast.test.js`: Zero-history run rates, 3-month blending, day-weighting, confidence calibration, volatility penalties, and budget risk flags.
+     - `analyticsEndpoints.test.js`: Full dashboard summary responses, forecast payloads, and valid PDF streaming headers/buffers (`%PDF-`).
+
+---
+
 ## Real Problems Encountered & Fixed (Build Log)
 
 ### Problem 1: Google GenAI Package Version Incompatibility (P0)
@@ -102,6 +139,19 @@
 - **Cause**: On initial test run, `mongodb-memory-server` had to download the official 600MB MongoDB binary to cache locally. The download took ~45s, exceeding Jest's default 5000ms hook timeout.
 - **Fix**: Added `jest.setTimeout(30000)` in `server/tests/setup.js`.
 - **Lesson**: Large setup tasks like test container binary downloads must be accounted for in test runner timeout settings.
+
+### Problem 3: Supertest Boolean Short-Circuit in Test Assertion (P2)
+- **Symptom**: `tests/analyticsEndpoints.test.js` failed with `Expected: 25000, Received: 2500`.
+- **Cause**: An assertion written as `expect(data.summary.totalExpense).toBe(25000 || 2500)` short-circuited to `25000` because non-zero numbers are truthy in JS, whereas the test fixture only spent 2500.
+- **Fix**: Replaced with exact assertion `expect(data.summary.totalExpense).toBe(2500)`.
+- **Lesson**: Avoid boolean operators (`||`) inside test equality assertions.
+
+### Problem 4: Windows MongoMemoryServer Re-spawn Delay (P2)
+- **Symptom**: When running 11 test suites in band, `tests/budget.test.js` failed with `GenericMMSError: Instance failed to start within 10000ms`.
+- **Cause**: Consecutive process spawning and socket cleanups on Windows can occasionally exceed 10,000ms when multiple in-memory mongod instances are created in sequence.
+- **Fix**: Configured `launchTimeout: 60000` in `MongoMemoryServer.create()` and set `mongoServer = null` on stop in `server/tests/setup.js`.
+- **Lesson**: Windows process port releasing has higher latency than Linux; configure generous process launch timeouts for local test databases.
+
 
 
 
