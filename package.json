@@ -4,7 +4,10 @@
   "scripts": {
     "dev:server": "npm --prefix server run dev",
     "dev:client": "npm --prefix client run dev",
+    "db:local": "npm --prefix server run db:local",
     "test": "npm --prefix server test",
+    "seed": "npm --prefix server run seed",
+    "eval:categorize": "npm --prefix server run eval:categorize",
     "build:client": "npm --prefix client run build"
   }
 }
